@@ -1,0 +1,172 @@
+<div class="register-container">
+  <div class="register-card">
+    <!-- Header -->
+    <div class="register-header">
+      <h1 class="app-name">SafeRoad</h1>
+      <p class="app-tagline">Create Your Account</p>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
+      <!-- Error Message -->
+      <div class="alert alert-error" *ngIf="errorMessage()">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-body">
+          <ng-container *ngFor="let line of errorMessage()!.split('\n')">
+            <div>{{ line }}</div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Success Message -->
+      <div class="alert alert-success" *ngIf="successMessage()">
+        <span class="alert-icon">✓</span>
+        {{ successMessage() }}
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input
+          id="email"
+          type="email"
+          class="form-control"
+          formControlName="email"
+          placeholder="Enter your email"
+          [class.is-invalid]="f['email'].invalid && f['email'].touched"
+        />
+        <div class="error-text" *ngIf="f['email'].invalid && f['email'].touched">
+          <span *ngIf="f['email'].errors?.['required']">Email is required</span>
+          <span *ngIf="f['email'].errors?.['email']">Please enter a valid email</span>
+        </div>
+      </div>
+
+      <!-- Username Field -->
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input
+          id="username"
+          type="text"
+          class="form-control"
+          formControlName="username"
+          placeholder="Choose a username"
+          [class.is-invalid]="f['username'].invalid && f['username'].touched"
+        />
+        <div class="error-text" *ngIf="f['username'].invalid && f['username'].touched">
+          <span *ngIf="f['username'].errors?.['required']">Username is required</span>
+          <span *ngIf="f['username'].errors?.['minlength']">Username must be at least 3 characters</span>
+        </div>
+      </div>
+
+      <!-- Full Name Field -->
+      <div class="form-group">
+        <label for="full_name" class="form-label">Full Name</label>
+        <input
+          id="full_name"
+          type="text"
+          class="form-control"
+          formControlName="full_name"
+          placeholder="Enter your full name"
+          [class.is-invalid]="f['full_name'].invalid && f['full_name'].touched"
+        />
+        <div class="error-text" *ngIf="f['full_name'].invalid && f['full_name'].touched">
+          <span *ngIf="f['full_name'].errors?.['required']">Full name is required</span>
+          <span *ngIf="f['full_name'].errors?.['minlength']">Full name must be at least 3 characters</span>
+        </div>
+      </div>
+
+      <!-- Phone Field -->
+      <div class="form-group">
+        <label for="phone" class="form-label">Phone Number</label>
+        <input
+          id="phone"
+          type="tel"
+          class="form-control"
+          formControlName="phone"
+          placeholder="10-digit phone number"
+          [class.is-invalid]="f['phone'].invalid && f['phone'].touched"
+        />
+        <div class="error-text" *ngIf="f['phone'].invalid && f['phone'].touched">
+          <span *ngIf="f['phone'].errors?.['required']">Phone number is required</span>
+          <span *ngIf="f['phone'].errors?.['pattern']">Please enter a valid 10-digit phone number</span>
+        </div>
+      </div>
+
+      <!-- User Type Field -->
+      <div class="form-group">
+        <label for="user_type_id" class="form-label">Account Type</label>
+        <select
+          id="user_type_id"
+          class="form-control"
+          formControlName="user_type_id"
+          [disabled]="isLoadingUserTypes()"
+          [class.is-invalid]="f['user_type_id'].invalid && f['user_type_id'].touched"
+        >
+          <option *ngIf="isLoadingUserTypes()" disabled selected>Loading...</option>
+          <option *ngFor="let type of userTypes()" [value]="type.user_type_id">
+            {{ type.type_name }}
+          </option>
+        </select>
+        <div class="error-text" *ngIf="isLoadingUserTypes()">
+          <span>Fetching account types...</span>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input
+          id="password"
+          type="password"
+          class="form-control"
+          formControlName="password"
+          placeholder="At least 6 characters"
+          [class.is-invalid]="f['password'].invalid && f['password'].touched"
+        />
+        <div class="error-text" *ngIf="f['password'].invalid && f['password'].touched">
+          <span *ngIf="f['password'].errors?.['required']">Password is required</span>
+          <span *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters</span>
+        </div>
+      </div>
+
+      <!-- Confirm Password Field -->
+      <div class="form-group">
+        <label for="confirm_password" class="form-label">Confirm Password</label>
+        <input
+          id="confirm_password"
+          type="password"
+          class="form-control"
+          formControlName="confirm_password"
+          placeholder="Confirm your password"
+          [class.is-invalid]="(f['confirm_password'].invalid && f['confirm_password'].touched) || (registerForm.errors?.['passwordMismatch'] && f['confirm_password'].touched)"
+        />
+        <div class="error-text" *ngIf="f['confirm_password'].invalid && f['confirm_password'].touched">
+          <span *ngIf="f['confirm_password'].errors?.['required']">Please confirm your password</span>
+        </div>
+        <div class="error-text" *ngIf="registerForm.errors?.['passwordMismatch'] && f['confirm_password'].touched">
+          <span>Passwords do not match</span>
+        </div>
+      </div>
+
+      <!-- Register Button -->
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="isLoading() || registerForm.invalid"
+      >
+        <span *ngIf="!isLoading()">Create Account</span>
+        <span *ngIf="isLoading()">Creating Account...</span>
+      </button>
+    </form>
+
+    <!-- Login Link -->
+    <div class="register-footer">
+      <p class="login-text">
+        Already have an account?
+        <button class="login-link" (click)="goToLogin()">
+          Login here
+        </button>
+      </p>
+    </div>
+  </div>
+</div>

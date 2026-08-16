@@ -1,0 +1,209 @@
+<div class="verifications-container">
+  <!-- Header Section -->
+  <div class="verifications-header">
+    <h1>✓ Violation Verifications</h1>
+    <p>Review and verify submitted violation reports</p>
+  </div>
+
+  <!-- Statistics -->
+  <div class="stats-row">
+    <div class="stat">
+      <span class="stat-icon">📊</span>
+      <span class="stat-text">{{ getStats().total }} Total Verifications</span>
+    </div>
+    <div class="stat pending">
+      <span class="stat-icon">⏳</span>
+      <span class="stat-text">{{ getStats().pending }} Pending Review</span>
+    </div>
+    <div class="stat approved">
+      <span class="stat-icon">✅</span>
+      <span class="stat-text">{{ getStats().approved }} Approved</span>
+    </div>
+    <div class="stat rejected">
+      <span class="stat-icon">❌</span>
+      <span class="stat-text">{{ getStats().rejected }} Rejected</span>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-filter-section">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by violation ID or plate number..."
+        [(ngModel)]="searchText"
+        class="search-input"
+      />
+      <span class="search-icon">🔍</span>
+    </div>
+
+    <div class="filter-box">
+      <select [(ngModel)]="filterStatus" class="filter-select">
+        <option value="all">All Status</option>
+        <option value="1">Approved</option>
+        <option value="2">Pending Review</option>
+        <option value="3">Rejected</option>
+      </select>
+    </div>
+
+    <div class="result-count">
+      Showing {{ filteredVerifications.length }} of {{ verifications.length }} verifications
+    </div>
+  </div>
+
+  <!-- Verifications List -->
+  <div class="verifications-list">
+    <div *ngIf="filteredVerifications.length === 0" class="empty-state">
+      <p>😔 No verifications found matching your criteria</p>
+    </div>
+
+    <div
+      *ngFor="let verification of filteredVerifications"
+      class="verification-card"
+      (click)="viewDetails(verification)"
+      [class.selected]="selectedVerification?.verification_id === verification.verification_id"
+      [class.has-rejection]="verification.rejection_reason"
+    >
+      <div class="verification-header">
+        <div class="verification-id">
+          <span class="id-badge">Verification #{{ verification.verification_id }}</span>
+          <span class="violation-link">Violation #{{ verification.violation_id }}</span>
+        </div>
+        <span class="status-badge" [ngClass]="'status-' + getStatusBadge(verification.verification_status_id)">
+          {{ getStatusName(verification.verification_status_id) }}
+        </span>
+      </div>
+
+      <div class="verification-details">
+        <div class="detail-row">
+          <span class="detail-label">🚗 Vehicle Plate:</span>
+          <span class="detail-value">{{ getViolationPlate(verification.violation_id) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">📍 Method:</span>
+          <span class="detail-value">
+            {{ getMethodIcon(verification.verification_method_id) }}
+            {{ getMethodName(verification.verification_method_id) }}
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">👤 Verified By:</span>
+          <span class="detail-value">{{ getAdminName(verification.admin_id) }}</span>
+        </div>
+      </div>
+
+      <div class="verification-confidence">
+        <span class="confidence-label">Confidence Score</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" [style.width.%]="(verification.confidence_score || 0) * 100"></div>
+        </div>
+        <span class="confidence-value">{{ (verification.confidence_score || 0) * 100 | number: '1.0-0' }}%</span>
+      </div>
+
+      <div class="verification-preview" *ngIf="verification.comments">
+        <p>{{ verification.comments | slice: 0:100 }}{{ verification.comments && verification.comments.length > 100 ? '...' : '' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" *ngIf="selectedVerification" (click)="closeDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Verification #{{ selectedVerification.verification_id }}</h2>
+        <button class="close-btn" (click)="closeDetails()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Basic Information -->
+        <div class="info-section">
+          <h3>Basic Information</h3>
+          <div class="info-grid">
+            <div class="info-group">
+              <label>Verification ID:</label>
+              <p>{{ selectedVerification.verification_id }}</p>
+            </div>
+            <div class="info-group">
+              <label>Violation ID:</label>
+              <p>
+                <a href="javascript:void(0)" class="link">#{{ selectedVerification.violation_id }}</a>
+              </p>
+            </div>
+            <div class="info-group">
+              <label>Vehicle Plate:</label>
+              <p>{{ getViolationPlate(selectedVerification.violation_id) }}</p>
+            </div>
+            <div class="info-group">
+              <label>Status:</label>
+              <p>
+                <span class="status-badge" [ngClass]="'status-' + getStatusBadge(selectedVerification.verification_status_id)">
+                  {{ getStatusName(selectedVerification.verification_status_id) }}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Details -->
+        <div class="info-section">
+          <h3>Verification Details</h3>
+          <div class="info-grid">
+            <div class="info-group">
+              <label>Verification Method:</label>
+              <p>{{ getMethodIcon(selectedVerification.verification_method_id) }} {{ getMethodName(selectedVerification.verification_method_id) }}</p>
+            </div>
+            <div class="info-group">
+              <label>Verified By:</label>
+              <p>{{ getAdminName(selectedVerification.admin_id) }}</p>
+            </div>
+            <div class="info-group">
+              <label>Verification Date:</label>
+              <p>{{ selectedVerification.verification_datetime | date: 'medium' }}</p>
+            </div>
+            <div class="info-group">
+              <label>Confidence Score:</label>
+              <p>{{ (selectedVerification.confidence_score || 0) * 100 | number: '1.0-0' }}%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comments and Evidence -->
+        <div class="info-section">
+          <h3>Comments & Evidence</h3>
+          <div class="text-fields">
+            <div class="text-field">
+              <label>Verification Comments:</label>
+              <p class="text-content">{{ selectedVerification.comments || 'No comments provided' }}</p>
+            </div>
+            <div class="text-field" *ngIf="selectedVerification.evidence_notes">
+              <label>Evidence Notes:</label>
+              <p class="text-content">{{ selectedVerification.evidence_notes }}</p>
+            </div>
+            <div class="text-field" *ngIf="selectedVerification.rejection_reason">
+              <label>Rejection Reason:</label>
+              <p class="text-content rejection">{{ selectedVerification.rejection_reason }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDetails()">Close</button>
+        <button
+          class="btn-danger"
+          (click)="rejectVerification(selectedVerification)"
+          [disabled]="selectedVerification.verification_status_id === 3"
+        >
+          Reject
+        </button>
+        <button
+          class="btn-success"
+          (click)="approveVerification(selectedVerification)"
+          [disabled]="selectedVerification.verification_status_id === 1"
+        >
+          Approve
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

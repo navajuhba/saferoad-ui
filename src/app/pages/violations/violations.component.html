@@ -1,0 +1,239 @@
+<div class="violations-container">
+
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="loading-indicator">
+    <div class="spinner"></div>
+    <p>Loading your violation reports...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage && !isLoading" class="error-alert">
+    <div class="error-icon">⚠️</div>
+    <div class="error-content">
+      <h3>Unable to Load Reports</h3>
+      <p>{{ errorMessage }}</p>
+      <button class="btn-retry" (click)="refreshViolations()">🔄 Try Again</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading && !errorMessage" class="violations-content">
+    
+  <!-- Header Section -->
+  <div class="violations-header">
+    <div class="header-top">
+      <h1>📋 Violation Reports</h1>
+      <div class="header-buttons">
+        <button class="btn-refresh" (click)="refreshViolations()" [disabled]="isLoading" title="Refresh violations list">
+          🔄 Refresh
+        </button>
+        <button class="btn-new-violation" routerLink="/violations/new">
+          + Report New Violation
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-row">
+      <div class="stat">
+        <span class="stat-icon">📊</span>
+        <span class="stat-text">{{ getStats().total }} Total Reports</span>
+      </div>
+      <div class="stat pending">
+        <span class="stat-icon">⏳</span>
+        <span class="stat-text">{{ getStats().pending }} Pending</span>
+      </div>
+      <div class="stat verified">
+        <span class="stat-icon">✓</span>
+        <span class="stat-text">{{ getStats().verified }} Verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-filter-section">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Search by plate number or violation ID..."
+        [(ngModel)]="searchText"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-box">
+      <select [(ngModel)]="filterStatus" class="filter-select">
+        <option value="all">All Status</option>
+        <option value="1">Pending</option>
+        <option value="2">Verified</option>
+        <option value="3">Rejected</option>
+      </select>
+    </div>
+
+    <div class="result-count">
+      Showing <strong>{{ filteredViolations.length }}</strong> of <strong>{{ violations.length }}</strong> reports
+    </div>
+  </div>
+
+  <!-- Violations List -->
+  <div class="violations-list">
+    <div *ngIf="filteredViolations.length === 0" class="empty-state">
+      <p>😔 No violations found matching your criteria</p>
+    </div>
+
+    <div
+      *ngFor="let violation of filteredViolations"
+      class="violation-group"
+    >
+      <!-- Main card row -->
+      <div
+        class="violation-item"
+        (click)="viewDetails(violation)"
+        [class.selected]="selectedViolation?.violation_id === violation.violation_id"
+        [class.has-verdict]="violation.violation_status_id === 2 || violation.violation_status_id === 3"
+      >
+        <div class="violation-left">
+          <div class="violation-image">
+            <img
+              *ngIf="violation.image_url"
+              [src]="violation.image_url"
+              [alt]="'Violation ' + violation.violation_id"
+              (error)="onImageError($event)"
+            />
+            <div *ngIf="!violation.image_url" class="no-image-placeholder">
+              <span>📷</span>
+              <small>No image</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="violation-center">
+          <div class="violation-title">
+            <h3>Violation #{{ violation.violation_id }}</h3>
+            <span class="vehicle-plate">{{ violation.vehicle_plate_number }}</span>
+          </div>
+
+          <div class="violation-details">
+            <div class="detail-row">
+              <span class="detail-label">📅 Date:</span>
+              <span class="detail-value">{{ violation.violation_datetime | date: 'medium' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">🏷️ Category:</span>
+              <span class="detail-value">{{ getCategoryName(violation.category_id) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">📍 Location:</span>
+              <span class="detail-value">
+                {{ violation.location_latitude | number: '1.4-4' }},
+                {{ violation.location_longitude | number: '1.4-4' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="violation-right">
+          <span class="status-badge" [ngClass]="'status-' + getStatusBadge(violation.violation_status_id)">
+            {{ getStatusName(violation.violation_status_id) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Verification decision banner -->
+      <div class="verification-banner approved" *ngIf="violation.violation_status_id === 2">
+        <span class="banner-icon">✅</span>
+        <div class="banner-text">
+          <strong>Approved by Admin</strong>
+          <span *ngIf="violation.verification?.verification_datetime">
+            on {{ violation.verification!.verification_datetime | date:'mediumDate' }}
+          </span>
+        </div>
+      </div>
+      <div class="verification-banner rejected" *ngIf="violation.violation_status_id === 3">
+        <span class="banner-icon">❌</span>
+        <div class="banner-text">
+          <strong>Rejected by Admin</strong>
+          <span *ngIf="violation.verification?.rejection_reason" class="rejection-reason">
+            Reason: {{ violation.verification!.rejection_reason }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" *ngIf="selectedViolation" (click)="closeDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Violation Details #{{ selectedViolation.violation_id }}</h2>
+        <button class="close-btn" (click)="closeDetails()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-image">
+          <img [src]="selectedViolation.image_url" [alt]="'Violation ' + selectedViolation.violation_id" />
+        </div>
+
+        <div class="detail-info">
+          <div class="info-group">
+            <label>Vehicle Plate Number:</label>
+            <p>{{ selectedViolation.vehicle_plate_number }}</p>
+          </div>
+
+          <div class="info-group">
+            <label>Violation Category:</label>
+            <p>{{ getCategoryName(selectedViolation.category_id) }}</p>
+          </div>
+
+          <div class="info-group">
+            <label>Date & Time:</label>
+            <p>{{ selectedViolation.violation_datetime | date: 'medium' }}</p>
+          </div>
+
+          <div class="info-group">
+            <label>Location Coordinates:</label>
+            <p>
+              Lat: {{ selectedViolation.location_latitude | number: '1.4-4' }}<br />
+              Lng: {{ selectedViolation.location_longitude | number: '1.4-4' }}
+            </p>
+          </div>
+
+          <div class="info-group">
+            <label>Status:</label>
+            <p>
+              <span class="status-badge" [ngClass]="'status-' + getStatusBadge(selectedViolation.violation_status_id)">
+                {{ getStatusName(selectedViolation.violation_status_id) }}
+              </span>
+            </p>
+          </div>
+
+          <div class="info-group verdict-box approved" *ngIf="selectedViolation.violation_status_id === 2">
+            <label>✅ Admin Decision</label>
+            <p><strong>Approved</strong>
+              <span *ngIf="selectedViolation.verification?.verification_datetime">
+                — {{ selectedViolation.verification!.verification_datetime | date:'medium' }}
+              </span>
+            </p>
+          </div>
+
+          <div class="info-group verdict-box rejected" *ngIf="selectedViolation.violation_status_id === 3">
+            <label>❌ Admin Decision</label>
+            <p><strong>Rejected</strong></p>
+            <p *ngIf="selectedViolation.verification?.rejection_reason" class="rejection-reason-text">
+              {{ selectedViolation.verification!.rejection_reason }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDetails()">Close</button>
+        <button class="btn-primary" (click)="editViolation(selectedViolation)">Edit</button>
+        <button class="btn-danger" (click)="deleteViolation(selectedViolation.violation_id)">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>

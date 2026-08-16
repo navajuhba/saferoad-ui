@@ -1,0 +1,44 @@
+<header class="app-header">
+  <div class="header-container">
+    <div class="logo-section">
+      <div class="title-with-menu">
+        <button class="hamburger-btn" (click)="onToggleSidebar()" title="Toggle Sidebar">
+          ☰
+        </button>
+        <h1 class="app-title">SafeRoad</h1>
+      </div>
+      <p class="tagline">Making Roads Safer Together</p>
+    </div>
+
+    <div class="header-right">
+      <!-- Loading indicator -->
+      <div class="loading-indicator" *ngIf="isLoading()">
+        Loading...
+      </div>
+
+      <!-- Error message -->
+      <div class="error-message" *ngIf="errorMessage()">
+        {{ errorMessage() }}
+      </div>
+
+      <!-- Notifications -->
+      <div class="notifications" (click)="onNotificationsClick()">
+        <span class="bell-icon">🔔</span>
+        <span class="notification-badge" *ngIf="userProfile().notifications > 0">
+          {{ userProfile().notifications }}
+        </span>
+      </div>
+
+      <!-- User Profile -->
+      <div class="user-profile">
+        <div class="user-info" (click)="onProfileClick()">
+          <span class="user-name">{{ userProfile().name }}</span>
+          <span class="user-role">{{ userProfile().role }}</span>
+        </div>
+        <img [src]="userProfile().avatar" alt="User Avatar" class="avatar">
+      </div>
+
+      <button class="logout-btn" (click)="onLogout()">Logout</button>
+    </div>
+  </div>
+</header>

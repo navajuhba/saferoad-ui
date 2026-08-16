@@ -1,0 +1,43 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+  <nav class="sidebar-nav">
+    <div class="nav-section">      
+
+      <ul class="nav-list">
+        <li *ngFor="let item of getCombinedNavItems()" class="nav-item">
+          <a
+            class="nav-link"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [title]="item.description"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label" *ngIf="!isCollapsed">{{ item.label }}</span>
+            <span class="nav-badge" *ngIf="item.badge && !isCollapsed">
+              {{ item.badge }}
+            </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="nav-section admin-section" *ngIf="!isCollapsed && isAdminUser()">
+      <h3 class="nav-section-title">Admin</h3>
+
+      <ul class="nav-list">
+        <li *ngFor="let item of adminNavItems" class="nav-item">
+          <a
+            class="nav-link"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [title]="item.description"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</aside>

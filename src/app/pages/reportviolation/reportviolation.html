@@ -1,0 +1,339 @@
+<div class="report-violation-container">
+  <!-- Header -->
+  <div class="violation-header">
+    <h1>🚨 Report a Violation</h1>
+    <p class="subtitle">Help us keep roads safe by reporting traffic violations</p>
+  </div>
+
+  <!-- Stepper -->
+  <div class="stepper-container">
+    <div class="stepper-wrapper">
+      <div *ngFor="let step of steps; let i = index" class="stepper-item" [class.active]="currentStep === i" [class.completed]="i < currentStep">
+        <div class="step-number">
+          <span *ngIf="i < currentStep" class="check-mark">✓</span>
+          <span *ngIf="i >= currentStep">{{ i + 1 }}</span>
+        </div>
+        <div class="step-label">{{ step }}</div>
+        <!-- <div class="step-line" *ngIf="i < steps.length - 1"></div> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Step Content -->
+  <div class="step-content-wrapper">
+    <!-- Step 1: Violation Type -->
+    <div *ngIf="currentStep === 0" class="step-content" [@fadeInOut]>
+      <div class="step-header">
+        <h2>Select Violation Type</h2>
+        <p>What type of violation did you witness?</p>
+      </div>
+
+      <form class="violation-form">
+        <div class="form-group">
+          <label for="category" class="form-label">Violation Category *</label>
+          <select id="category" [(ngModel)]="form.category" name="category" class="form-select" required>
+            <option value="" disabled selected>Choose a violation type...</option>
+            <option *ngFor="let type of violationTypes" [value]="type.id">
+              {{ type.name }}
+            </option>
+          </select>
+          <span class="error-message" *ngIf="form.category === '' && submitted">
+            Please select a violation type
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="description" class="form-label">Description (Optional)</label>
+          <textarea id="description" [(ngModel)]="form.description" name="description" class="form-textarea" 
+                    placeholder="Provide additional details about the violation..."
+                    rows="4"></textarea>
+          <span class="char-count">{{ form.description?.length || 0 }}/500</span>
+        </div>
+
+        <div class="vehicle-info-section">
+          <h3 class="section-title">🚗 Vehicle Information (Optional)</h3>
+          <div class="vehicle-fields-grid">
+            <div class="form-group">
+              <label for="vehicle_type" class="form-label">Vehicle Type</label>
+              <select id="vehicle_type" [(ngModel)]="form.vehicle_type_id" name="vehicle_type_id" class="form-select">
+                <option value="" disabled selected>Select vehicle type...</option>
+                <option *ngFor="let type of vehicleTypes" [value]="type.id">
+                  {{ type.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="vehicle_color" class="form-label">Vehicle Color</label>
+              <select id="vehicle_color" [(ngModel)]="form.vehicle_color" name="vehicle_color" class="form-select">
+                <option value="" disabled selected>Select vehicle color...</option>
+                <option *ngFor="let color of vehicleColors" [value]="color.name">
+                  {{ color.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">License Plate Number *</label>
+          <div class="plate-container">
+            <div class="plate-display">
+              <div class="plate-state" [title]="form.plate_state ? indianStates.find(s => s.code === form.plate_state)?.name : ''">
+                {{ form.plate_state || 'TG' }}
+              </div>
+              <input type="text" 
+                     class="plate-input plate-district-code" 
+                     [(ngModel)]="form.plate_district_code"
+                     (input)="onPlateDistrictCodeChange($event)"
+                     name="plate_district_code"
+                     placeholder="01"
+                     maxlength="2"
+                     title="Enter 2 digits">
+              <input type="text" 
+                     class="plate-input plate-series"
+                     [(ngModel)]="form.plate_series"
+                     (input)="onPlateSeriesChange($event)"
+                     name="plate_series"
+                     placeholder="FE"
+                     maxlength="2"
+                     title="Enter 2 characters">
+              <input type="text" 
+                     class="plate-input plate-number"
+                     [(ngModel)]="form.plate_number"
+                     (input)="onPlateNumberChange($event)"
+                     name="plate_number"
+                     placeholder="1234"
+                     maxlength="4"
+                     title="Enter 4 digits">
+            </div>
+          </div>
+          <small class="plate-info">Format: STATE + 2 digits + 2 chars + 4 digits (e.g., TG 01 FE 1234)</small>
+          <span class="error-message" *ngIf="!form.vehicle_plate_number && submitted">
+            License plate number is required
+          </span>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 2: Location -->
+    <div *ngIf="currentStep === 1" class="step-content" [@fadeInOut]>
+      <div class="step-header">
+        <h2>Location Details</h2>
+        <p>Where did you witness this violation?</p>
+      </div>
+
+      <form class="violation-form">
+        <div class="location-actions">
+          <button type="button" class="btn-location" (click)="getCurrentLocation()">
+            <span class="location-icon">📍</span>
+            {{ locationLoading ? 'Getting Location...' : 'Use Current Location' }}
+          </button>
+          <span class="or-divider">OR</span>
+          <span class="help-text">Click on map</span>
+        </div>
+
+        <!-- Map Container -->
+        <div class="form-group">
+          <label class="form-label">Select Location on Map</label>
+          <div #mapContainer class="map-container" id="map"></div>
+          <span class="map-help-text">Click on the map to select location, or use your current location</span>
+        </div>
+
+        <div class="coordinates-grid">
+          <div class="form-group">
+            <label for="latitude" class="form-label">Latitude *</label>
+            <input id="latitude" type="number" [(ngModel)]="form.latitude" name="latitude" 
+                   class="form-input" placeholder="e.g., 40.7128" required [readonly]="false"
+                   (change)="onCoordinateChange()">
+            <span class="error-message" *ngIf="!form.latitude && submitted">
+              Latitude is required
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="longitude" class="form-label">Longitude *</label>
+            <input id="longitude" type="number" [(ngModel)]="form.longitude" name="longitude" 
+                   class="form-input" placeholder="e.g., -74.0060" required [readonly]="false"
+                   (change)="onCoordinateChange()">
+            <span class="error-message" *ngIf="!form.longitude && submitted">
+              Longitude is required
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="address" class="form-label">Address (Auto-populated)</label>
+          <input id="address" type="text" [(ngModel)]="form.address" name="address" 
+                 class="form-input" placeholder="Address will be auto-populated from coordinates..."
+                 readonly>
+          <span class="address-loading" *ngIf="addressLoading">🔄 Finding address...</span>
+        </div>
+
+        <div class="location-info" *ngIf="form.latitude && form.longitude">
+          <span class="info-icon">ℹ️</span>
+          <span>Location: {{ form.latitude | number: '1.4-6' }}, {{ form.longitude | number: '1.4-6' }}</span>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 3: Photo Upload -->
+    <div *ngIf="currentStep === 2" class="step-content" [@fadeInOut]>
+      <div class="step-header">
+        <h2>Upload Evidence Photo</h2>
+        <p>Upload a photo of the violation or license plate</p>
+      </div>
+
+      <form class="violation-form">
+        <div class="file-upload-section">
+          <div class="file-upload-area" [class.has-file]="preview"
+               (drop)="onDropFile($event)" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)">
+            
+            <input type="file" #fileInput hidden accept="image/*" 
+                   (change)="onFileChange($event)">
+            
+            <div class="upload-content" *ngIf="!preview" (click)="fileInput.click()">
+              <span class="upload-icon">📸</span>
+              <h3>Drop image here or click to select</h3>
+              <p>Supported formats: JPG, PNG, GIF (Max 100KB)</p>
+            </div>
+
+            <div class="preview-content" *ngIf="preview">
+              <img [src]="preview" alt="Preview" class="preview-image">
+              <button type="button" class="btn-remove" (click)="removeFile()">✕ Remove</button>
+            </div>
+          </div>
+
+          <div class="file-info" *ngIf="form.image">
+            <span class="file-name">📄 {{ form.image.name }}</span>
+            <span class="file-size">{{ (form.image.size / 1024).toFixed(2) }} KB</span>
+          </div>
+
+          <span class="error-message" *ngIf="imageValidationError">
+            ⚠️ {{ imageValidationError }}
+          </span>
+
+          <span class="error-message" *ngIf="!form.image && !imageValidationError && submitted">
+            Please upload at least one photo
+          </span>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 4: Review & Submit -->
+    <div *ngIf="currentStep === 3" class="step-content" [@fadeInOut]>
+      <div class="step-header">
+        <h2>Review Your Report</h2>
+        <p>Please review the information before submitting</p>
+      </div>
+
+      <div class="review-section">
+        <div class="review-item">
+          <div class="review-label">
+            <span class="review-icon">📋</span>
+            <span>Violation Type</span>
+          </div>
+          <div class="review-value">{{ getCategoryName(form.category) }}</div>
+        </div>
+
+        <div class="review-item" *ngIf="form.description">
+          <div class="review-label">
+            <span class="review-icon">📝</span>
+            <span>Description</span>
+          </div>
+          <div class="review-value">{{ form.description }}</div>
+        </div>
+
+        <div class="review-item" *ngIf="form.vehicle_type_id">
+          <div class="review-label">
+            <span class="review-icon">🚗</span>
+            <span>Vehicle Type</span>
+          </div>
+          <div class="review-value">{{ getVehicleTypeName(form.vehicle_type_id) }}</div>
+        </div>
+
+        <div class="review-item" *ngIf="form.vehicle_color">
+          <div class="review-label">
+            <span class="review-icon">🎨</span>
+            <span>Vehicle Color</span>
+          </div>
+          <div class="review-value">{{ form.vehicle_color }}</div>
+        </div>
+
+        <div class="review-item" *ngIf="form.vehicle_plate_number">
+          <div class="review-label">
+            <span class="review-icon">🏷️</span>
+            <span>License Plate</span>
+          </div>
+          <div class="review-value plate-review">{{ form.vehicle_plate_number }}</div>
+        </div>
+
+        <div class="review-item">
+          <div class="review-label">
+            <span class="review-icon">📍</span>
+            <span>Location</span>
+          </div>
+          <div class="review-value">
+            <div>{{ form.address || 'Not specified' }}</div>
+            <small>{{ form.latitude }}, {{ form.longitude }}</small>
+          </div>
+        </div>
+
+        <div class="review-item">
+          <div class="review-label">
+            <span class="review-icon">📸</span>
+            <span>Evidence Photo</span>
+          </div>
+          <div class="review-value">
+            <img *ngIf="preview" [src]="preview" alt="Evidence" class="review-image">
+          </div>
+        </div>
+
+        <div class="review-notice">
+          <span class="notice-icon">⚠️</span>
+          <span>By submitting this report, you confirm that all information is accurate and truthful.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <span class="alert-icon">✓</span>
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error" role="alert">
+    <div class="alert-content">
+      <span class="alert-icon">✕</span>
+      <div class="alert-message">
+        <p>{{ errorMessage }}</p>
+        <small class="error-hint">Please review your input and try again, or contact support if the issue persists.</small>
+      </div>
+      <button type="button" class="alert-close" (click)="clearError()" title="Close">×</button>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="step-actions">
+    <button type="button" class="btn btn-secondary" (click)="prev()" 
+            [disabled]="currentStep === 0 || isSubmitting">
+      ← Back
+    </button>
+
+    <div class="step-counter">
+      Step {{ currentStep + 1 }} of {{ steps.length }}
+    </div>
+
+    <button type="button" *ngIf="currentStep < 3" class="btn btn-primary" 
+            (click)="next()" [disabled]="!canProceed() || isSubmitting">
+      Next →
+    </button>
+
+    <button type="button" *ngIf="currentStep === 3" class="btn btn-success" 
+            (click)="submit()" [disabled]="isSubmitting">
+      <span *ngIf="isSubmitting" class="spinner">⏳</span>
+      {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
+    </button>
+  </div>
+</div>

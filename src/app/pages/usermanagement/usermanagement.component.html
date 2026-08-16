@@ -1,0 +1,143 @@
+<div class="um-container">
+
+  <!-- Page Header -->
+  <div class="um-header">
+    <div class="um-title">
+      <h1>👥 User Management</h1>
+      <p>View, edit or remove registered users</p>
+    </div>
+    <button class="btn-refresh" (click)="loadUsers()" [disabled]="isLoading">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="um-filters">
+    <div class="search-wrap">
+      <input
+        type="text"
+        class="um-input"
+        placeholder="Search by name, email or username…"
+        [(ngModel)]="searchText"
+        (ngModelChange)="applyFilters()"
+      />
+      <span class="search-icon">🔍</span>
+    </div>
+
+    <select class="um-select" [(ngModel)]="filterType" (ngModelChange)="applyFilters()">
+      <option value="all">All Types</option>
+      <option value="1" selected>Reporter</option>
+      <option value="2">Admin</option>
+    </select>
+
+    <span class="result-count">{{ filteredUsers.length }} of {{ users.length }} users</span>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="um-state">
+    <div class="spinner"></div>
+    <p>Loading users…</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="errorMessage && !isLoading" class="um-error">
+    <p>⚠️ {{ errorMessage }}</p>
+    <button class="btn-retry" (click)="loadUsers()">Retry</button>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!isLoading && !errorMessage && filteredUsers.length === 0" class="um-state">
+    <p>No users found matching your criteria.</p>
+  </div>
+
+  <!-- Users Table -->
+  <div class="um-table-wrap" *ngIf="!isLoading && !errorMessage && filteredUsers.length > 0">
+    <table class="um-table">
+      <thead>
+        <tr>
+          <th>#ID</th>
+          <th>Name</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td class="td-id">#{{ user.user_id }}</td>
+          <td class="td-name">{{ user.full_name }}</td>
+          <td class="td-username">@{{ user.username }}</td>
+          <td class="td-email">{{ user.email }}</td>
+          <td>{{ user.phone || '—' }}</td>
+          <td>
+            <span class="badge" [ngClass]="user.user_type_id === 2 ? 'badge-admin' : 'badge-reporter'">
+              {{ user.user_type || getUserTypeName(user.user_type_id) }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="user.status_id === 1 ? 'badge-active' : 'badge-inactive'">
+              {{ getStatusLabel(user.status_id) }}
+            </span>
+          </td>
+          <td class="td-date">{{ user.created_at | date:'mediumDate' }}</td>
+          <td class="td-actions">
+            <button class="btn-edit" (click)="openEdit(user)" title="Edit user">✏️ Edit</button>
+            <button class="btn-delete" (click)="confirmDelete(user.user_id)" title="Delete user">🗑️ Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-backdrop" *ngIf="editModalOpen" (click)="closeEdit()"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-backdrop" *ngIf="deleteConfirmId !== null" (click)="cancelDelete()"></div>
+<div class="delete-modal" *ngIf="deleteConfirmId !== null">
+  <div class="delete-modal-icon">🗑️</div>
+  <h3>Delete User?</h3>
+  <p>Are you sure you want to delete <strong>{{ getUsernameById(deleteConfirmId!) }}</strong>? This action cannot be undone.</p>
+  <div class="delete-modal-actions">
+    <button class="btn-cancel" (click)="cancelDelete()">No, Cancel</button>
+    <button class="btn-confirm-yes" (click)="executeDelete(deleteConfirmId!)" [disabled]="isDeleting">
+      {{ isDeleting ? 'Deleting…' : 'Yes, Delete' }}
+    </button>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="edit-modal" *ngIf="editModalOpen">
+  <div class="modal-header">
+    <h2>✏️ Edit User #{{ editingUser.user_id }}</h2>
+    <button class="modal-close" (click)="closeEdit()">✕</button>
+  </div>
+
+  <div class="modal-body">
+    <div class="field-group">
+      <label>Full Name</label>
+      <input type="text" class="um-input" [(ngModel)]="editingUser.full_name" placeholder="Full name" />
+    </div>
+    <div class="field-group">
+      <label>Phone</label>
+      <input type="text" class="um-input" [(ngModel)]="editingUser.phone" placeholder="Phone number" />
+    </div>
+    <div class="field-group">
+      <label>Profile Picture URL</label>
+      <input type="url" class="um-input" [(ngModel)]="editingUser.profile_picture_url" placeholder="https://..." />
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn-cancel" (click)="closeEdit()">Cancel</button>
+    <button class="btn-save" (click)="saveEdit()" [disabled]="isSaving">
+      {{ isSaving ? 'Saving…' : '💾 Save Changes' }}
+    </button>
+  </div>
+</div>

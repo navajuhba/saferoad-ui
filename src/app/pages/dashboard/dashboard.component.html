@@ -1,0 +1,300 @@
+<div class="dashboard-container">
+
+  <!-- Welcome Bar -->
+  <div class="welcome-section">
+    <h1>Welcome, {{ currentUserName() }}!</h1>
+    <p>Here's your SafeRoad overview</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon-wrap">📊</div>
+      <div class="stat-content">
+        <h3>Total Reports</h3>
+        <p class="stat-value">{{ stats.totalReports }}</p>
+      </div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-icon-wrap">⏳</div>
+      <div class="stat-content">
+        <h3>Pending</h3>
+        <p class="stat-value">{{ stats.pendingVerification }}</p>
+      </div>
+    </div>
+    <div class="stat-card approved">
+      <div class="stat-icon-wrap">✅</div>
+      <div class="stat-content">
+        <h3>Approved</h3>
+        <p class="stat-value">{{ stats.approvedReports }}</p>
+      </div>
+    </div>
+    <div class="stat-card reward">
+      <div class="stat-icon-wrap">💰</div>
+      <div class="stat-content">
+        <h3>Balance</h3>
+        <p class="stat-value">₹{{ stats.currentBalance }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="dashboard-grid">
+
+    <!-- Wallet Summary - Full Width Row -->
+    <section class="dashboard-section wallet-section full-width">
+      <h2>💼 Wallet Summary</h2>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoadingWallet" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading wallet data...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="walletError && !isLoadingWallet" class="error-state">
+        <p>⚠️ {{ walletError }}</p>
+      </div>
+
+      <!-- Content -->
+      <div *ngIf="!isLoadingWallet && !walletError" class="wallet-stats-row">
+        <div class="wallet-stat-card balance-card">
+          <div class="wallet-stat-icon">💰</div>
+          <div class="wallet-stat-info">
+            <span class="wallet-stat-label">Current Balance</span>
+            <span class="wallet-stat-value">₹{{ userWallet.current_balance }}</span>
+          </div>
+        </div>
+        <div class="wallet-stat-card">
+          <div class="wallet-stat-icon">📊</div>
+          <div class="wallet-stat-info">
+            <span class="wallet-stat-label">Total Earned</span>
+            <span class="wallet-stat-value">₹{{ userWallet.total_earned }}</span>
+          </div>
+        </div>
+        <div class="wallet-stat-card">
+          <div class="wallet-stat-icon">💳</div>
+          <div class="wallet-stat-info">
+            <span class="wallet-stat-label">Total Redeemed</span>
+            <span class="wallet-stat-value">₹{{ userWallet.total_redeemed }}</span>
+          </div>
+        </div>
+        <div class="wallet-stat-card highlight">
+          <div class="wallet-stat-icon">✨</div>
+          <div class="wallet-stat-info">
+            <span class="wallet-stat-label">Available Balance</span>
+            <span class="wallet-stat-value">₹{{ userWallet.current_balance }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Violations - Full Width Row -->
+    <section class="dashboard-section violations-section full-width">
+      <h2>📋 Recent Reports</h2>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoadingViolations" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading recent reports...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="violationsError && !isLoadingViolations" class="error-state">
+        <p>⚠️ {{ violationsError }}</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoadingViolations && !violationsError && recentViolations.length === 0" class="empty-state">
+        <p>No recent reports found</p>
+      </div>
+
+      <!-- Content -->
+      <div *ngIf="!isLoadingViolations && !violationsError && recentViolations.length > 0" class="list-scroll">
+        <div *ngFor="let violation of recentViolations" class="row-card">
+          <span class="rc-plate">{{ violation.vehicle_plate_number }}</span>
+          <span class="rc-date">{{ violation.violation_datetime | date: 'mediumDate' }}</span>
+          <span class="rc-badge" [ngClass]="violation.violation_status_id == 1 ? 'badge-pending' : 'badge-verified'">
+            {{ violation.violation_status_id == 1 ? 'Pending' : 'Verified' }}
+          </span>
+          <span class="rc-id">#{{ violation.violation_id }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Rewards - Full Width Row -->
+    <section class="dashboard-section rewards-section full-width">
+      <h2>🏆 Recent Rewards</h2>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoadingRewards" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading recent rewards...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="rewardsError && !isLoadingRewards" class="error-state">
+        <p>⚠️ {{ rewardsError }}</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoadingRewards && !rewardsError && recentRewards.length === 0" class="empty-state">
+        <p>No recent rewards found</p>
+      </div>
+
+      <!-- Content -->
+      <div *ngIf="!isLoadingRewards && !rewardsError && recentRewards.length > 0" class="list-scroll">
+        <div *ngFor="let reward of recentRewards" class="row-card">
+          <span class="rc-amount">₹{{ reward.reward_amount }}</span>
+          <span class="rc-date">{{ reward.created_at | date: 'mediumDate' }}</span>
+          <span class="rc-badge badge-verified">Completed</span>
+          <span class="rc-id">Reward #{{ reward.reward_id }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin: Pending Reports Approval — shown when pending violations API succeeds -->
+    <section class="dashboard-section admin-section full-width" *ngIf="isAdmin || isLoadingPending">
+      <div class="admin-section-header">
+        <h2>🔐 Admin — Pending Approvals</h2>
+        <span class="pending-count" *ngIf="pendingViolations.length > 0">{{ pendingViolations.length }} pending</span>
+        <button class="btn-refresh-sm" (click)="loadPendingViolations()" [disabled]="isLoadingPending">🔄 Refresh</button>
+      </div>
+
+      <div *ngIf="isLoadingPending" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading pending reports...</p>
+      </div>
+
+      <div *ngIf="pendingError && !isLoadingPending" class="error-state">
+        <p>⚠️ {{ pendingError }}</p>
+        <button class="btn-retry" (click)="loadPendingViolations()">Retry</button>
+      </div>
+
+      <div *ngIf="!isLoadingPending && !pendingError && pendingViolations.length === 0" class="empty-state">
+        <p>✅ No pending reports to review</p>
+      </div>
+
+      <!-- Rich violation detail cards -->
+      <div *ngIf="!isLoadingPending && !pendingError && pendingViolations.length > 0" class="violation-cards">
+        <div *ngFor="let v of pendingViolations" class="violation-review-card">
+
+          <!-- Card Header -->
+          <div class="card-header">
+            <span class="card-id">Report #{{ v.violation_id }}</span>
+            <span class="card-date">{{ v.violation_datetime | date:'medium' }}</span>
+            <span class="card-status badge-pending">⏳ Pending Review</span>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+
+            <!-- Image -->
+            <div class="card-image">
+              <img *ngIf="v.image_url" [src]="v.image_url" alt="Violation photo"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+              <div class="no-img-placeholder" [style.display]="v.image_url ? 'none' : 'flex'">
+                <span>📷</span><small>No photo</small>
+              </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="card-details">
+              <div class="detail-grid">
+
+                <div class="detail-item">
+                  <span class="di-label">🚗 Plate Number</span>
+                  <span class="di-value plate">{{ v.vehicle_plate_number || '—' }}</span>
+                </div>
+
+                <div class="detail-item">
+                  <span class="di-label">🚙 Vehicle Type</span>
+                  <span class="di-value">{{ getVehicleTypeName(v.vehicle_type_id) }}</span>
+                </div>
+
+                <div class="detail-item">
+                  <span class="di-label">🎨 Vehicle Color</span>
+                  <span class="di-value">{{ v.vehicle_color || '—' }}</span>
+                </div>
+
+                <div class="detail-item">
+                  <span class="di-label">🏷️ Violation Type</span>
+                  <span class="di-value">{{ getCategoryName(v.category_id) }}</span>
+                </div>
+
+                <div class="detail-item">
+                  <span class="di-label">📍 Location</span>
+                  <span class="di-value">
+                    <ng-container *ngIf="v.address">{{ v.address }}</ng-container>
+                    <ng-container *ngIf="!v.address && v.location_latitude">
+                      {{ v.location_latitude | number:'1.4-4' }}, {{ v.location_longitude | number:'1.4-4' }}
+                    </ng-container>
+                    <ng-container *ngIf="!v.address && !v.location_latitude">—</ng-container>
+                  </span>
+                </div>
+
+                <div class="detail-item">
+                  <span class="di-label">👤 Reporter ID</span>
+                  <span class="di-value">
+                    {{ v.reporter?.full_name || v.reporter?.username || ('#' + v.reporter_id) }}
+                  </span>
+                </div>
+
+                <div class="detail-item full-span" *ngIf="v.description">
+                  <span class="di-label">📝 Description</span>
+                  <span class="di-value description">{{ v.description }}</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Action Section -->
+          <div class="card-actions">
+            <div class="action-buttons" *ngIf="!showRejectForms[v.violation_id]">
+              <button
+                class="btn-approve"
+                (click)="approveViolation(v.violation_id)"
+                [disabled]="approvingId === v.violation_id || rejectingId === v.violation_id"
+              >
+                <span *ngIf="approvingId !== v.violation_id">✅ Approve Report</span>
+                <span *ngIf="approvingId === v.violation_id">Processing...</span>
+              </button>
+              <button
+                class="btn-reject-toggle"
+                (click)="toggleRejectForm(v.violation_id)"
+                [disabled]="approvingId === v.violation_id"
+              >
+                ❌ Reject Report
+              </button>
+            </div>
+
+            <!-- Reject form -->
+            <div class="reject-form" *ngIf="showRejectForms[v.violation_id]">
+              <label>Rejection Reason <span class="required">*</span></label>
+              <textarea
+                [(ngModel)]="rejectionReasons[v.violation_id]"
+                placeholder="Explain why this report is being rejected..."
+                rows="3"
+                class="reject-textarea"
+              ></textarea>
+              <div class="reject-form-buttons">
+                <button
+                  class="btn-reject"
+                  (click)="rejectViolation(v.violation_id)"
+                  [disabled]="!rejectionReasons[v.violation_id] || rejectingId === v.violation_id"
+                >
+                  <span *ngIf="rejectingId !== v.violation_id">Confirm Rejection</span>
+                  <span *ngIf="rejectingId === v.violation_id">Processing...</span>
+                </button>
+                <button class="btn-cancel" (click)="toggleRejectForm(v.violation_id)">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>

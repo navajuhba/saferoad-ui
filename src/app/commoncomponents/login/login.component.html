@@ -1,0 +1,78 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- Header -->
+    <div class="login-header">
+      <h1 class="app-name">SafeRoad</h1>
+      <p class="app-tagline">Making Roads Safer Together</p>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
+      <!-- Error Message -->
+      <div class="alert alert-error" *ngIf="errorMessage()">
+        <span class="alert-icon">⚠️</span>
+        {{ errorMessage() }}
+      </div>
+
+      <!-- Success Message -->
+      <div class="alert alert-success" *ngIf="successMessage()">
+        <span class="alert-icon">✓</span>
+        {{ successMessage() }}
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input
+          id="email"
+          type="email"
+          class="form-control"
+          formControlName="email"
+          placeholder="Enter your email"
+          [class.is-invalid]="f['email'].invalid && f['email'].touched"
+        />
+        <div class="error-text" *ngIf="f['email'].invalid && f['email'].touched">
+          <span *ngIf="f['email'].errors?.['required']">Email is required</span>
+          <span *ngIf="f['email'].errors?.['email']">Please enter a valid email</span>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input
+          id="password"
+          type="password"
+          class="form-control"
+          formControlName="password"
+          placeholder="Enter your password"
+          [class.is-invalid]="f['password'].invalid && f['password'].touched"
+        />
+        <div class="error-text" *ngIf="f['password'].invalid && f['password'].touched">
+          <span *ngIf="f['password'].errors?.['required']">Password is required</span>
+          <span *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters</span>
+        </div>
+      </div>
+
+      <!-- Login Button -->
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="isLoading() || loginForm.invalid"
+      >
+        <span *ngIf="!isLoading()">Login</span>
+        <span *ngIf="isLoading()">Logging in...</span>
+      </button>
+    </form>
+
+    <!-- Register Link -->
+    <div class="login-footer">
+      <p class="register-text">
+        Don't have an account?
+        <button class="register-link" (click)="goToRegister()">
+          Register here
+        </button>
+      </p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,121 @@
+<div class="rewards-container">
+  <!-- Header Section -->
+  <div class="rewards-header">
+    <h1>🏆 Rewards & Transactions</h1>
+    <p>Track your earned rewards and transaction history</p>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="summary-grid">
+    <div class="summary-card total">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <h3>Total Earned</h3>
+        <p class="card-value">{{ formatAmount(totalEarned) }}</p>
+        <span class="card-label">From all verified reports</span>
+      </div>
+    </div>
+
+    <div class="summary-card completed">
+      <div class="card-icon">✅</div>
+      <div class="card-content">
+        <h3>Completed</h3>
+        <p class="card-value">{{ formatAmount(totalCompleted) }}</p>
+        <span class="card-label">Received rewards</span>
+      </div>
+    </div>
+
+    <div class="summary-card pending">
+      <div class="card-icon">⏳</div>
+      <div class="card-content">
+        <h3>Pending</h3>
+        <p class="card-value">{{ formatAmount(totalPending) }}</p>
+        <span class="card-label">Awaiting verification</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs Section -->
+  <div class="tabs-container">
+    <div class="tabs">
+      <button class="tab-btn active">📊 Rewards</button>
+      <button class="tab-btn">📈 Transactions</button>
+    </div>
+
+    <!-- Rewards Tab -->
+    <div class="tab-content active">
+      <div class="rewards-list">
+        <div class="list-header">
+          <h2>Reward History</h2>
+          <span class="count">{{ rewards.length }} Total</span>
+        </div>
+
+        <div class="rewards-table">
+          <div class="table-header">
+            <div class="col-id">Reward ID</div>
+            <div class="col-amount">Amount</div>
+            <div class="col-violation">Violation ID</div>
+            <div class="col-method">Payment Method</div>
+            <div class="col-date">Date</div>
+            <div class="col-status">Status</div>
+          </div>
+
+          <div *ngFor="let reward of rewards" class="table-row">
+            <div class="col-id">
+              <span class="reward-badge">#{{ reward.reward_id }}</span>
+            </div>
+            <div class="col-amount">
+              <span class="amount-highlight">{{ formatAmount(reward.reward_amount) }}</span>
+            </div>
+            <div class="col-violation">
+              <span class="violation-link">#{{ reward.violation_id }}</span>
+            </div>
+            <div class="col-method">
+              <span class="method-tag">{{ getPaymentMethodName(reward.payment_method_id) }}</span>
+            </div>
+            <div class="col-date">
+              {{ reward.created_at | date: 'short' }}
+            </div>
+            <div class="col-status">
+              <span class="status-badge" [ngClass]="'status-' + getRewardStatusBadge(reward.reward_status_id)">
+                {{ getRewardStatusName(reward.reward_status_id) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions Tab -->
+    <div class="tab-content">
+      <div class="transactions-list">
+        <div class="list-header">
+          <h2>Transaction History</h2>
+          <span class="count">{{ transactions.length }} Total</span>
+        </div>
+
+        <div class="transactions-timeline">
+          <div *ngFor="let transaction of transactions" class="transaction-item">
+            <div class="transaction-icon">
+              {{ getTransactionTypeIcon(transaction.transaction_type_id) }}
+            </div>
+
+            <div class="transaction-content">
+              <h4>{{ getTransactionTypeName(transaction.transaction_type_id) }}</h4>
+              <p *ngIf="transaction.reward_id" class="transaction-detail">
+                Reward #{{ transaction.reward_id }}
+              </p>
+              <p class="transaction-date">{{ transaction.transaction_datetime | date: 'medium' }}</p>
+            </div>
+
+            <div class="transaction-amount">
+              <span class="amount" [ngClass]="transaction.transaction_type_id === 1 ? 'positive' : 'negative'">
+                {{ formatAmount(transaction.amount) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,224 @@
+.app-header {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: white;
+  padding: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: calc(100% - 15px);
+    margin: 0 auto;
+    padding: 0 10px 0 5px;
+    gap: 2rem;
+
+    .logo-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.3rem;
+      min-width: max-content;
+      padding-left: 15px;
+
+      .title-with-menu {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .hamburger-btn {
+          background: none;
+          border: none;
+          color: white;
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 0.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          transition: all 0.2s;
+          width: 40px;
+          height: 40px;
+
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+          }
+
+          &:active {
+            background-color: rgba(255, 255, 255, 0.3);
+          }
+        }
+      }
+
+      .app-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 1px;
+      }
+
+      .tagline {
+        font-size: 0.85rem;
+        margin: 0;
+        opacity: 0.9;
+        font-style: italic;
+      }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      min-width: max-content;
+      margin-left: auto;
+
+      .notifications {
+        position: relative;
+        cursor: pointer;
+        font-size: 1.5rem;
+        transition: transform 0.2s;
+
+        &:hover {
+          transform: scale(1.1);
+        }
+
+        .bell-icon {
+          display: block;
+        }
+
+        .notification-badge {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          background: #ff4757;
+          color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.75rem;
+          font-weight: bold;
+        }
+      }
+
+      .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-info {
+          text-align: right;
+
+          .user-name {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
+          }
+
+          .user-role {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.8;
+          }
+        }
+
+        .avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+      }
+
+      .logout-btn {
+        padding: 0.5rem 1.2rem;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background-color: rgba(255, 71, 87, 0.8);
+          border-color: #ff4757;
+        }
+      }
+
+      .loading-indicator {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .error-message {
+        font-size: 0.85rem;
+        color: #ffcccc;
+        background-color: rgba(255, 71, 87, 0.2);
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        border-left: 3px solid #ff4757;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    .header-container {
+      flex-wrap: wrap;
+      padding: 0.5rem 1rem;
+      gap: 1rem;
+
+      .logo-section {
+        .app-title {
+          font-size: 1.4rem;
+        }
+
+        .tagline {
+          font-size: 0.75rem;
+        }
+      }
+
+      .header-right {
+        gap: 1rem;
+        margin-left: auto;
+
+        .user-profile {
+          .user-name {
+            font-size: 0.85rem;
+          }
+        }
+
+        .logout-btn {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+}
