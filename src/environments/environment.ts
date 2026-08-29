@@ -3,7 +3,9 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000/api/v1',
+  // Deployed backend on Render. For a local backend, swap in:
+  // apiUrl: 'http://localhost:8000/api/v1',
+  apiUrl: 'https://saferoad-api-3vfl.onrender.com/api/v1',
 
   // Users endpoints
   users: {

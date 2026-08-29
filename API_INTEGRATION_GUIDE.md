@@ -5,14 +5,22 @@
 Two environment files have been created to handle different deployment scenarios:
 
 ### 1. Development Environment (`src/environments/environment.ts`)
-- **API Base URL**: `http://localhost:8000/api/v1`
+- **API Base URL**: `https://saferoad-api-3vfl.onrender.com/api/v1` (deployed backend on Render)
 - Used automatically during development (`ng serve`)
-- Perfect for local API development and testing
+- To run against a local backend instead, swap in `http://localhost:8000/api/v1`
 
 ### 2. Production Environment (`src/environments/environment.prod.ts`)
-- **API Base URL**: `https://api.saferoad.com/api/v1`
-- Used when building for production (`ng build --configuration production`)
-- Update the URL to your actual production API domain
+- **API Base URL**: `https://saferoad-api-3vfl.onrender.com/api/v1`
+- Used when building for production (`ng build`, default configuration)
+- `angular.json` swaps `environment.ts` → `environment.prod.ts` via `fileReplacements`
+
+## Deployment
+
+`render.yaml` (Render Blueprint) auto-deploys this UI as a static site on every
+push to `main`:
+- Build: `npm ci && npm run build`
+- Publish dir: `dist/saferoad-ui/browser`
+- SPA rewrite: all routes → `index.html`
 
 ## Endpoint Organization
 

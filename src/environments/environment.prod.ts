@@ -1,7 +1,7 @@
 // Production environment configuration
 export const environment = {
   production: true,
-  apiUrl: 'https://api.saferoad.com/api/v1',
+  apiUrl: 'https://saferoad-api-3vfl.onrender.com/api/v1',
 
   // Users endpoints
   users: {
