@@ -264,8 +264,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   approveViolation(violationId: number): void {
+    const adminId = this.sessionService.getUserId();
+    if (!adminId) { console.error('No admin session'); return; }
     this.approvingId = violationId;
-    this.verificationService.approveViolation({ violation_id: violationId }).subscribe({
+    this.verificationService.approveViolation({ violation_id: violationId, admin_id: adminId, confidence_score: 1 }).subscribe({
       next: () => {
         this.pendingViolations = this.pendingViolations.filter(v => v.violation_id !== violationId);
         this.approvingId = null;
@@ -281,8 +283,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   rejectViolation(violationId: number): void {
     const reason = this.rejectionReasons[violationId] || 'Rejected by admin';
+    const adminId = this.sessionService.getUserId();
+    if (!adminId) { console.error('No admin session'); return; }
     this.rejectingId = violationId;
-    this.verificationService.rejectViolation({ violation_id: violationId, rejection_reason: reason }).subscribe({
+    this.verificationService.rejectViolation({ violation_id: violationId, admin_id: adminId, rejection_reason: reason }).subscribe({
       next: () => {
         this.pendingViolations = this.pendingViolations.filter(v => v.violation_id !== violationId);
         this.rejectingId = null;

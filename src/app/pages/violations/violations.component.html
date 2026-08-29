@@ -224,6 +224,17 @@
               {{ selectedViolation.verification!.rejection_reason }}
             </p>
           </div>
+
+          <!-- Admin review controls (pending only) -->
+          <div class="info-group admin-review" *ngIf="isAdmin() && selectedViolation.violation_status_id === 1">
+            <label>🛡️ Admin Review</label>
+            <textarea
+              [(ngModel)]="rejectionReason"
+              rows="3"
+              placeholder="Rejection reason (required to reject)…"
+              class="reject-reason-input"
+            ></textarea>
+          </div>
         </div>
       </div>
 
@@ -231,6 +242,22 @@
         <button class="btn-secondary" (click)="closeDetails()">Close</button>
         <button class="btn-primary" (click)="editViolation(selectedViolation)">Edit</button>
         <button class="btn-danger" (click)="deleteViolation(selectedViolation.violation_id)">Delete</button>
+        <ng-container *ngIf="isAdmin() && selectedViolation.violation_status_id === 1">
+          <button
+            class="btn-danger"
+            (click)="rejectAsAdmin(selectedViolation)"
+            [disabled]="processingId === selectedViolation.violation_id"
+          >
+            {{ processingId === selectedViolation.violation_id ? '…' : 'Reject Report' }}
+          </button>
+          <button
+            class="btn-success"
+            (click)="approveAsAdmin(selectedViolation)"
+            [disabled]="processingId === selectedViolation.violation_id"
+          >
+            {{ processingId === selectedViolation.violation_id ? '…' : 'Approve Report' }}
+          </button>
+        </ng-container>
       </div>
     </div>
   </div>

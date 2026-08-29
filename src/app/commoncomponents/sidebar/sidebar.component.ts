@@ -176,15 +176,24 @@ export class SidebarComponent implements OnInit {
       }
     );
 
-    // Load verifications count
-    // NOTE: This would require a list endpoint from the backend
-    // For now, set to 0 for new users. This should be populated when backend provides
-    // a GET /api/v1/verifications endpoint or similar
-    setTimeout(() => {
-      this.verificationsCount = 0;
-      this.updateNavItemBadge('Verifications', this.verificationsCount);
-      this.cdr.markForCheck();
-    }, 0);
+    // Verifications badge = number of violations awaiting admin review
+    this.violationService.listPendingViolations().subscribe({
+      next: (response: any) => {
+        const pending: any[] = response?.data || (Array.isArray(response) ? response : []);
+        setTimeout(() => {
+          this.verificationsCount = pending.length;
+          this.updateNavItemBadge('Verifications', this.verificationsCount);
+          this.cdr.markForCheck();
+        }, 0);
+      },
+      error: () => {
+        setTimeout(() => {
+          this.verificationsCount = 0;
+          this.updateNavItemBadge('Verifications', 0);
+          this.cdr.markForCheck();
+        }, 0);
+      }
+    });
 
     // Load notifications count
     // NOTE: This would require a notifications service/endpoint

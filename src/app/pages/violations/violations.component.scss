@@ -549,6 +549,39 @@
               background: #ff9a9e;
             }
           }
+
+          &.btn-success {
+            background: linear-gradient(135deg, #2ed573 0%, #20a853 100%);
+            color: white;
+
+            &:hover:not(:disabled) {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(46, 213, 115, 0.3);
+            }
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+      }
+
+      .admin-review {
+        .reject-reason-input {
+          width: 100%;
+          margin-top: 0.4rem;
+          padding: 0.6rem 0.8rem;
+          border: 1px solid #d0d0d0;
+          border-radius: 6px;
+          font-family: inherit;
+          font-size: 0.9rem;
+          resize: vertical;
+
+          &:focus {
+            outline: none;
+            border-color: #2a5298;
+          }
         }
       }
     }

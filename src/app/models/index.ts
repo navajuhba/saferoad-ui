@@ -35,11 +35,15 @@ export interface Violation {
   vehicle_plate_number?: string;
   vehicle_type_id?: number;
   vehicle_color?: string;
+  vehicle_model?: string;
   description?: string;
   address?: string;
   location_latitude?: number;
   location_longitude?: number;
+  location_address?: string;
+  location_landmark?: string;
   image_url?: string;
+  image_mime_type?: string;
   violation_status_id?: number;
   created_at?: string;
   reporter?: User;

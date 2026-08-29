@@ -5,8 +5,10 @@ import { RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Violation } from '../../models';
-import { ViolationService, ToasterService, DataRefreshService } from '../../services';
+import { ViolationService, ToasterService, DataRefreshService, VerificationService } from '../../services';
 import { SessionAuthService } from '../../services/session.service';
+import { UserStateService } from '../../services/user-state.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-violations',
@@ -24,6 +26,8 @@ export class ViolationsComponent implements OnInit, OnDestroy {
   isLoading = true;
   violations: Violation[] = [];
   errorMessage: string | null = null;
+  rejectionReason = '';
+  processingId: number | null = null;
 
   violationCategories = [
     { id: 1, name: 'Speeding' },
@@ -45,7 +49,10 @@ export class ViolationsComponent implements OnInit, OnDestroy {
 
   constructor(
     private violationService: ViolationService,
+    private verificationService: VerificationService,
     private sessionService: SessionAuthService,
+    private userState: UserStateService,
+    private userService: UserService,
     private toasterService: ToasterService,
     private cdr: ChangeDetectorRef,
     private dataRefresh: DataRefreshService
@@ -53,8 +60,92 @@ export class ViolationsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('🟦 ViolationsComponent ngOnInit called');
+    this.ensureUserLoaded();
     this.loadUserViolations();
     this.dataRefresh.refresh$.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadUserViolations());
+  }
+
+  /** Load current user if the signal is empty (e.g. after a page refresh) so isAdmin() is accurate. */
+  private ensureUserLoaded(): void {
+    if (this.userState.currentUser()) return;
+    const userId = this.sessionService.getUserId();
+    if (!userId) return;
+    this.userService.getUserDetails(userId).subscribe({
+      next: (response: any) => {
+        const user = response?.data || response;
+        if (user?.user_id) {
+          this.userState.setUser(user);
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  isAdmin(): boolean {
+    return this.userState.currentUser()?.user_type_id === 2;
+  }
+
+  /** Admin: approve a pending violation via POST /verifications/approve. */
+  approveAsAdmin(violation: Violation): void {
+    if (!this.adminGuard(violation)) return;
+    this.processingId = violation.violation_id;
+    this.verificationService.approveViolation({
+      violation_id: violation.violation_id,
+      admin_id: this.sessionService.getUserId() as string,
+      confidence_score: 1
+    }).subscribe({
+      next: () => this.afterDecision(violation, 2, 'approved'),
+      error: (err: any) => this.afterDecisionError(err, 'approve')
+    });
+  }
+
+  /** Admin: reject a pending violation via POST /verifications/reject. */
+  rejectAsAdmin(violation: Violation): void {
+    if (!this.adminGuard(violation)) return;
+    const reason = (this.rejectionReason || '').trim()
+      || (window.prompt('Reason for rejection:') || '').trim();
+    if (!reason) {
+      this.toasterService.warning('A rejection reason is required.');
+      return;
+    }
+    this.processingId = violation.violation_id;
+    this.verificationService.rejectViolation({
+      violation_id: violation.violation_id,
+      admin_id: this.sessionService.getUserId() as string,
+      rejection_reason: reason
+    }).subscribe({
+      next: () => this.afterDecision(violation, 3, 'rejected'),
+      error: (err: any) => this.afterDecisionError(err, 'reject')
+    });
+  }
+
+  private adminGuard(violation: Violation): boolean {
+    if (!this.isAdmin()) {
+      this.toasterService.error('Only admins can review violations.');
+      return false;
+    }
+    if (!this.sessionService.getUserId()) {
+      this.toasterService.error('Session expired. Please log in again.');
+      return false;
+    }
+    return this.processingId !== violation.violation_id;
+  }
+
+  private afterDecision(violation: Violation, statusId: number, outcome: string): void {
+    violation.violation_status_id = statusId;
+    this.processingId = null;
+    this.rejectionReason = '';
+    this.toasterService.success(`Violation #${violation.violation_id} ${outcome}.`);
+    this.closeDetails();
+    this.cdr.detectChanges();
+  }
+
+  private afterDecisionError(err: any, action: string): void {
+    this.processingId = null;
+    const detail = err?.error?.detail || err?.error?.message;
+    this.toasterService.error(`Failed to ${action} violation${detail ? ': ' + detail : ''}.`);
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy(): void {
