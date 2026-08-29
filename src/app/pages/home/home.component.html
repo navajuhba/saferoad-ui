@@ -1,0 +1,92 @@
+<div class="home">
+  <!-- Top bar -->
+  <header class="home-topbar">
+    <div class="brand">
+      <span class="brand-mark">🛡️</span>
+      <span class="brand-name">SafeRoad</span>
+    </div>
+    <nav class="topbar-actions">
+      <a routerLink="/violations/new" class="btn btn-outline-light btn-sm">Report</a>
+      <a routerLink="/login" class="btn btn-light btn-sm">Login</a>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Report traffic violations. Make roads safer. Get rewarded.</h1>
+      <p class="hero-subtitle">
+        SafeRoad lets citizens report unsafe driving and traffic rule violations.
+        Verified reports earn rewards while helping build safer roads for everyone.
+      </p>
+      <div class="hero-cta">
+        <a routerLink="/violations/new" class="btn btn-primary btn-lg">Report a Violation</a>
+        <a routerLink="/login" class="btn btn-light btn-lg">Login</a>
+      </div>
+      <p class="hero-note">
+        New here? <a routerLink="/register">Create an account</a> to track your reports and rewards.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <h2 class="section-title">Why use SafeRoad</h2>
+    <div class="feature-grid">
+      <article class="feature-card" *ngFor="let f of features">
+        <div class="feature-icon">{{ f.icon }}</div>
+        <h3 class="feature-title">{{ f.title }}</h3>
+        <p class="feature-text">{{ f.description }}</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section section-alt">
+    <h2 class="section-title">How it works</h2>
+    <ol class="steps">
+      <li class="step" *ngFor="let s of steps">
+        <span class="step-number">{{ s.number }}</span>
+        <div class="step-body">
+          <h3 class="step-title">{{ s.title }}</h3>
+          <p class="step-text">{{ s.text }}</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- Educational: know the rules -->
+  <section class="section">
+    <h2 class="section-title">Know the rules</h2>
+    <p class="section-lead">
+      A quick refresher on common traffic rules and the penalties for breaking them.
+      Knowing what counts as a violation helps you drive safely — and report accurately.
+    </p>
+    <div class="rule-grid">
+      <article class="rule-card" *ngFor="let r of rules">
+        <div class="rule-icon">{{ r.icon }}</div>
+        <div class="rule-body">
+          <h3 class="rule-title">{{ r.title }}</h3>
+          <p class="rule-text">{{ r.text }}</p>
+          <p class="rule-penalty"><strong>Penalty:</strong> {{ r.penalty }}</p>
+        </div>
+      </article>
+    </div>
+    <p class="rule-disclaimer">
+      Penalties are indicative and based on the Motor Vehicles Act; actual fines vary by state and may change.
+    </p>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="cta-band">
+    <h2 class="cta-title">Ready to report your first violation?</h2>
+    <div class="hero-cta">
+      <a routerLink="/violations/new" class="btn btn-primary btn-lg">Report a Violation</a>
+      <a routerLink="/login" class="btn btn-outline-light btn-lg">Login</a>
+    </div>
+  </section>
+
+  <footer class="home-footer">
+    <p>&copy; {{ year }} SafeRoad — Making Roads Safer Together</p>
+  </footer>
+</div>

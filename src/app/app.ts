@@ -37,9 +37,14 @@ export class App implements OnInit {
    * Determine if header and sidebar should be shown based on current route
    */
   private updateHeaderSidebarVisibility() {
-    const url = this.router.url;
-    // Hide header/sidebar on login and register pages
-    this.showHeaderSidebar.set(!url.includes('/login') && !url.includes('/register'));
+    const url = this.router.url.split('?')[0];
+    // Hide header/sidebar on public pages (home, login, register)
+    const publicPage =
+      url === '/' ||
+      url.includes('/home') ||
+      url.includes('/login') ||
+      url.includes('/register');
+    this.showHeaderSidebar.set(!publicPage);
   }
 
   onToggleSidebar() {
