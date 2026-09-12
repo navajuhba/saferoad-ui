@@ -1,7 +1,12 @@
 // Production environment configuration
+const apiUrl = 'https://saferoad-api-3vfl.onrender.com/api/v1';
+
 export const environment = {
   production: true,
-  apiUrl: 'https://saferoad-api-3vfl.onrender.com/api/v1',
+  apiUrl,
+  // Origin of the backend (no /api/v1 suffix) — used to resolve server-relative
+  // paths returned by the API, such as a violation's image_url.
+  apiOrigin: apiUrl.replace(/\/api\/v1\/?$/, ''),
 
   // Users endpoints
   users: {

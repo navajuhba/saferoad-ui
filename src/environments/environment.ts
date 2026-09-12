@@ -1,11 +1,16 @@
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 
+const apiUrl = 'https://saferoad-api-3vfl.onrender.com/api/v1';
+// const apiUrl = 'http://localhost:8000/api/v1'; // local backend
+
 export const environment = {
   production: false,
-  // Deployed backend on Render. For a local backend, swap in:
-  // apiUrl: 'http://localhost:8000/api/v1',
-  apiUrl: 'https://saferoad-api-3vfl.onrender.com/api/v1',
+  // Deployed backend on Render. For a local backend, swap in the line above.
+  apiUrl,
+  // Origin of the backend (no /api/v1 suffix) — used to resolve server-relative
+  // paths returned by the API, such as a violation's image_url.
+  apiOrigin: apiUrl.replace(/\/api\/v1\/?$/, ''),
 
   // Users endpoints
   users: {

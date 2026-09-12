@@ -9,6 +9,7 @@ import { ViolationService, ToasterService, DataRefreshService, VerificationServi
 import { SessionAuthService } from '../../services/session.service';
 import { UserStateService } from '../../services/user-state.service';
 import { UserService } from '../../services/user.service';
+import { resolveMediaUrl } from '../../utils/media.util';
 
 @Component({
   selector: 'app-violations',
@@ -297,6 +298,10 @@ export class ViolationsComponent implements OnInit, OnDestroy {
 
   closeDetails() {
     this.selectedViolation = null;
+  }
+
+  resolveImageUrl(path?: string): string | undefined {
+    return resolveMediaUrl(path);
   }
 
   onImageError(event: Event): void {

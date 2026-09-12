@@ -3,6 +3,16 @@
 
 /* You can add global styles to this file, and also import other style files */
 
+/* Applies to every routed page (unlike app.scss's own `*` reset, which — due to
+   Angular's view-encapsulation — only reaches AppComponent's own template, not
+   content rendered through <router-outlet>). Without this, any element that
+   combines width:100% with padding (very common in the form/button styles
+   throughout this app) silently overflows its container instead of being
+   sized inside it — a frequent cause of horizontal overflow on mobile. */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;

@@ -58,13 +58,7 @@ export class SidebarComponent implements OnInit {
       label: 'Rewards',
       route: '/rewards',
       icon: '🏆',
-      description: 'Track your earned rewards'
-    },
-    {
-      label: 'Wallet',
-      route: '/wallet',
-      icon: '💰',
-      description: 'Manage your account balance'
+      description: 'Track your earned rewards and wallet transactions'
     },
     {
       label: 'Notifications',
@@ -86,12 +80,6 @@ export class SidebarComponent implements OnInit {
       route: '/user-management',
       icon: '👥',
       description: 'Manage reporter users'
-    },
-    {
-      label: 'Admin Logs',
-      route: '/admin/logs',
-      icon: '📖',
-      description: 'View admin activities'
     }
   ];
 
@@ -228,12 +216,6 @@ export class SidebarComponent implements OnInit {
   }
 
   getCombinedNavItems(): NavItem[] {
-    if (this.isAdminUser()) {
-      return [
-        ...this.navItems,
-      { label: 'User Management', route: '/user-management', icon: '👥', description: 'Manage reporter users' }
-      ];
-    }
     return this.navItems;
   }
 }

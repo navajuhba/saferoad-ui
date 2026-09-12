@@ -191,7 +191,7 @@
 
             <!-- Image -->
             <div class="card-image">
-              <img *ngIf="v.image_url" [src]="v.image_url" alt="Violation photo"
+              <img *ngIf="v.image_url" [src]="resolveImageUrl(v.image_url)" alt="Violation photo"
                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
               <div class="no-img-placeholder" [style.display]="v.image_url ? 'none' : 'flex'">
                 <span>📷</span><small>No photo</small>

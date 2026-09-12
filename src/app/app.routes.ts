@@ -43,8 +43,8 @@ export const routes: Routes = [
   },
   {
     path: 'wallet',
-    loadComponent: () => import('./pages/rewards/rewards.component').then(m => m.RewardsComponent),
-    canActivate: [authGuard]
+    redirectTo: '/rewards',
+    pathMatch: 'full'
   },
   {
     path: 'verifications',
@@ -65,12 +65,6 @@ export const routes: Routes = [
   {
     path: 'user-management',
     loadComponent: () => import('./pages/usermanagement/usermanagement.component').then(m => m.UsermanagementComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'admin/logs',
-    pathMatch: 'full',
-    loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
   {

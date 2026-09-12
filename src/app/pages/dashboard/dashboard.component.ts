@@ -11,6 +11,7 @@ import { RewardService } from '../../services/reward.service';
 import { VerificationService } from '../../services/verification.service';
 import { SessionAuthService } from '../../services/session.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
+import { resolveMediaUrl } from '../../utils/media.util';
 
 interface DashboardStats {
   totalReports: number;
@@ -57,6 +58,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   violationCategories: ViolationCategory[] = [];
+
+  resolveImageUrl(path?: string): string | undefined {
+    return resolveMediaUrl(path);
+  }
 
   getVehicleTypeName(id?: number): string {
     return this.vehicleTypes.find(t => t.id === id)?.name || 'Unknown';

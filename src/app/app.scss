@@ -218,6 +218,14 @@ input, textarea, select {
         height: calc(100vh - 70px);
         z-index: 999;
       }
+
+      // The collapsed icon rail (see sidebar.component.scss) is absolutely
+      // positioned and 80px wide at this breakpoint — without this offset it
+      // sits on top of the page content instead of beside it.
+      .app-content {
+        margin-left: 80px;
+        width: calc(100% - 80px);
+      }
     }
   }
 }

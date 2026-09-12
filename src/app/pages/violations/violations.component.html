@@ -97,7 +97,7 @@
           <div class="violation-image">
             <img
               *ngIf="violation.image_url"
-              [src]="violation.image_url"
+              [src]="resolveImageUrl(violation.image_url)"
               [alt]="'Violation ' + violation.violation_id"
               (error)="onImageError($event)"
             />
@@ -172,7 +172,11 @@
 
       <div class="modal-body">
         <div class="detail-image">
-          <img [src]="selectedViolation.image_url" [alt]="'Violation ' + selectedViolation.violation_id" />
+          <img *ngIf="selectedViolation.image_url" [src]="resolveImageUrl(selectedViolation.image_url)" [alt]="'Violation ' + selectedViolation.violation_id" />
+          <div *ngIf="!selectedViolation.image_url" class="no-image-placeholder">
+            <span>📷</span>
+            <small>No image</small>
+          </div>
         </div>
 
         <div class="detail-info">
