@@ -221,8 +221,10 @@ input, textarea, select {
 
       // The collapsed icon rail (see sidebar.component.scss) is absolutely
       // positioned and 80px wide at this breakpoint — without this offset it
-      // sits on top of the page content instead of beside it.
-      .app-content {
+      // sits on top of the page content instead of beside it. Only applies
+      // when the sidebar is actually rendered (i.e. not on the public
+      // login/register/home pages, which use .full-width instead).
+      .app-content:not(.full-width) {
         margin-left: 80px;
         width: calc(100% - 80px);
       }
