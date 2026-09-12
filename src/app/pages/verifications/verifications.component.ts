@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Violation } from '../../models';
+import { Violation, ViolationCategory } from '../../models';
 import { VerificationService } from '../../services/verification.service';
 import { ViolationService } from '../../services/violation.service';
+import { RewardService } from '../../services/reward.service';
 import { DataRefreshService, ToasterService } from '../../services';
 import { SessionAuthService } from '../../services/session.service';
 import { UserStateService } from '../../services/user-state.service';
@@ -30,26 +31,17 @@ export class VerificationsComponent implements OnInit, OnDestroy {
   searchText = '';
   selectedViolation: Violation | null = null;
   rejectionReason = '';
+  rewardAmount: number | null = null;
   pendingViolations: Violation[] = [];
+  violationCategories: ViolationCategory[] = [];
   isLoading = false;
   processingId: number | null = null;
   errorMessage: string | null = null;
 
-  violationCategories = [
-    { id: 1, name: 'Speeding' },
-    { id: 2, name: 'Red Light Violation' },
-    { id: 3, name: 'Rash Driving' },
-    { id: 4, name: 'Wrong Way' },
-    { id: 5, name: 'Parking Violation' },
-    { id: 6, name: 'No Seat Belt' },
-    { id: 7, name: 'Mobile Phone Usage' },
-    { id: 8, name: 'Lane Change Violation' },
-    { id: 9, name: 'Other' }
-  ];
-
   constructor(
     private verificationService: VerificationService,
     private violationService: ViolationService,
+    private rewardService: RewardService,
     private sessionService: SessionAuthService,
     private userState: UserStateService,
     private userService: UserService,
@@ -60,8 +52,18 @@ export class VerificationsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.ensureUserLoaded();
+    this.loadCategories();
     this.loadPending();
     this.dataRefresh.refresh$.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadPending());
+  }
+
+  private loadCategories(): void {
+    this.violationService.listViolationCategories().subscribe({
+      next: (response: any) => {
+        this.violationCategories = response?.data || (Array.isArray(response) ? response : []);
+      },
+      error: () => {}
+    });
   }
 
   ngOnDestroy(): void {
@@ -74,7 +76,7 @@ export class VerificationsComponent implements OnInit, OnDestroy {
     if (this.userState.currentUser()) return;
     const userId = this.sessionService.getUserId();
     if (!userId) return;
-    this.userService.getUserDetails(userId).subscribe({
+    this.userService.getUserDetailsWithType(userId).subscribe({
       next: (response: any) => {
         const user = response?.data || response;
         if (user?.user_id) {
@@ -125,12 +127,17 @@ export class VerificationsComponent implements OnInit, OnDestroy {
   }
 
   getCategoryName(categoryId?: number): string {
-    return this.violationCategories.find(c => c.id === categoryId)?.name ?? 'Unknown';
+    return this.violationCategories.find(c => c.category_id === categoryId)?.category_name ?? 'Unknown';
+  }
+
+  getCategoryBaseAmount(categoryId?: number): number {
+    return this.violationCategories.find(c => c.category_id === categoryId)?.base_reward_amount ?? 0;
   }
 
   viewDetails(violation: Violation): void {
     this.selectedViolation = violation;
     this.rejectionReason = '';
+    this.rewardAmount = this.getCategoryBaseAmount(violation.category_id);
   }
 
   closeDetails(): void {
@@ -138,16 +145,40 @@ export class VerificationsComponent implements OnInit, OnDestroy {
     this.rejectionReason = '';
   }
 
-  approve(violation: Violation): void {
+  /**
+   * Approve the violation, then credit the reporter by creating a reward
+   * (POST /rewards/) for the category's base amount, or `amount` if given
+   * (used by the modal's editable reward-amount field).
+   */
+  approve(violation: Violation, amount?: number): void {
     if (!this.guard(violation)) return;
+    const rewardAmount = amount ?? this.getCategoryBaseAmount(violation.category_id);
     this.processingId = violation.violation_id;
     this.verificationService.approveViolation({
       violation_id: violation.violation_id,
       admin_id: this.currentAdminId() as string,
       confidence_score: 1
     }).subscribe({
-      next: () => this.onDecision(violation, 'approved'),
+      next: () => this.creditReward(violation, rewardAmount),
       error: (err: any) => this.onDecisionError(err, 'approve')
+    });
+  }
+
+  private creditReward(violation: Violation, amount: number): void {
+    this.rewardService.createReward({
+      violation_id: violation.violation_id,
+      reporter_id: violation.reporter_id,
+      category_id: violation.category_id,
+      reward_amount: amount
+    }).subscribe({
+      next: () => {
+        this.onDecision(violation, 'approved', `Violation #${violation.violation_id} approved — ₹${amount} reward credited to reporter #${violation.reporter_id}.`);
+      },
+      error: (err: any) => {
+        // Violation is already approved server-side; only the reward creation failed.
+        const detail = err?.error?.detail || err?.error?.message;
+        this.onDecision(violation, 'approved', `Violation #${violation.violation_id} approved, but reward creation failed${detail ? ': ' + detail : ''}.`);
+      }
     });
   }
 
@@ -183,11 +214,12 @@ export class VerificationsComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  private onDecision(violation: Violation, outcome: 'approved' | 'rejected'): void {
+  private onDecision(violation: Violation, outcome: 'approved' | 'rejected', message?: string): void {
     this.pendingViolations = this.pendingViolations.filter(v => v.violation_id !== violation.violation_id);
     this.processingId = null;
-    this.toaster.success(`Violation #${violation.violation_id} ${outcome}.`);
+    this.toaster.success(message ?? `Violation #${violation.violation_id} ${outcome}.`);
     if (this.selectedViolation?.violation_id === violation.violation_id) this.closeDetails();
+    this.dataRefresh.triggerRefresh();
     this.cdr.detectChanges();
   }
 

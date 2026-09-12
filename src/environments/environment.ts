@@ -16,6 +16,7 @@ export const environment = {
     updateUser: (userId: string) => `/users/${userId}`,
     deleteUser: (userId: string) => `/users/${userId}`,
     getUserWallet: (userId: string) => `/users/${userId}/wallet`,
+    getUsersByType: (typeId: string) => `/users/by-type/${typeId}`,
   },
 
   // Violations endpoints

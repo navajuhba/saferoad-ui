@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Violation } from '../../models';
-import { ViolationService, ToasterService, DataRefreshService, VerificationService } from '../../services';
+import { Violation, ViolationCategory } from '../../models';
+import { ViolationService, ToasterService, DataRefreshService, VerificationService, RewardService } from '../../services';
 import { SessionAuthService } from '../../services/session.service';
 import { UserStateService } from '../../services/user-state.service';
 import { UserService } from '../../services/user.service';
@@ -29,17 +29,7 @@ export class ViolationsComponent implements OnInit, OnDestroy {
   rejectionReason = '';
   processingId: number | null = null;
 
-  violationCategories = [
-    { id: 1, name: 'Speeding' },
-    { id: 2, name: 'Red Light Violation' },
-    { id: 3, name: 'Rash Driving' },
-    { id: 4, name: 'Wrong Way' },
-    { id: 5, name: 'Parking Violation' },
-    { id: 6, name: 'No Seat Belt' },
-    { id: 7, name: 'Mobile Phone Usage' },
-    { id: 8, name: 'Lane Change Violation' },
-    { id: 9, name: 'Other' }
-  ];
+  violationCategories: ViolationCategory[] = [];
 
   violationStatuses = [
     { id: 1, name: 'Pending', badge: 'pending' },
@@ -50,6 +40,7 @@ export class ViolationsComponent implements OnInit, OnDestroy {
   constructor(
     private violationService: ViolationService,
     private verificationService: VerificationService,
+    private rewardService: RewardService,
     private sessionService: SessionAuthService,
     private userState: UserStateService,
     private userService: UserService,
@@ -61,8 +52,22 @@ export class ViolationsComponent implements OnInit, OnDestroy {
   ngOnInit() {
     console.log('🟦 ViolationsComponent ngOnInit called');
     this.ensureUserLoaded();
+    this.loadCategories();
     this.loadUserViolations();
     this.dataRefresh.refresh$.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadUserViolations());
+  }
+
+  private loadCategories(): void {
+    this.violationService.listViolationCategories().subscribe({
+      next: (response: any) => {
+        this.violationCategories = response?.data || (Array.isArray(response) ? response : []);
+      },
+      error: () => {}
+    });
+  }
+
+  getCategoryBaseAmount(categoryId?: number): number {
+    return this.violationCategories.find(c => c.category_id === categoryId)?.base_reward_amount ?? 0;
   }
 
   /** Load current user if the signal is empty (e.g. after a page refresh) so isAdmin() is accurate. */
@@ -70,7 +75,7 @@ export class ViolationsComponent implements OnInit, OnDestroy {
     if (this.userState.currentUser()) return;
     const userId = this.sessionService.getUserId();
     if (!userId) return;
-    this.userService.getUserDetails(userId).subscribe({
+    this.userService.getUserDetailsWithType(userId).subscribe({
       next: (response: any) => {
         const user = response?.data || response;
         if (user?.user_id) {
@@ -86,16 +91,30 @@ export class ViolationsComponent implements OnInit, OnDestroy {
     return this.userState.currentUser()?.user_type_id === 2;
   }
 
-  /** Admin: approve a pending violation via POST /verifications/approve. */
+  /** Admin: approve a pending violation, then credit the reporter with the category's reward amount. */
   approveAsAdmin(violation: Violation): void {
     if (!this.adminGuard(violation)) return;
+    const rewardAmount = this.getCategoryBaseAmount(violation.category_id);
     this.processingId = violation.violation_id;
     this.verificationService.approveViolation({
       violation_id: violation.violation_id,
       admin_id: this.sessionService.getUserId() as string,
       confidence_score: 1
     }).subscribe({
-      next: () => this.afterDecision(violation, 2, 'approved'),
+      next: () => {
+        this.rewardService.createReward({
+          violation_id: violation.violation_id,
+          reporter_id: violation.reporter_id,
+          category_id: violation.category_id,
+          reward_amount: rewardAmount
+        }).subscribe({
+          next: () => this.afterDecision(violation, 2, `approved — ₹${rewardAmount} reward credited`),
+          error: (err: any) => {
+            const detail = err?.error?.detail || err?.error?.message;
+            this.afterDecision(violation, 2, `approved, but reward creation failed${detail ? ': ' + detail : ''}`);
+          }
+        });
+      },
       error: (err: any) => this.afterDecisionError(err, 'approve')
     });
   }
@@ -138,6 +157,7 @@ export class ViolationsComponent implements OnInit, OnDestroy {
     this.rejectionReason = '';
     this.toasterService.success(`Violation #${violation.violation_id} ${outcome}.`);
     this.closeDetails();
+    this.dataRefresh.triggerRefresh();
     this.cdr.detectChanges();
   }
 
@@ -257,8 +277,8 @@ export class ViolationsComponent implements OnInit, OnDestroy {
   }
 
   getCategoryName(categoryId?: number): string {
-    const category = this.violationCategories.find(c => c.id === categoryId);
-    return category ? category.name : 'Unknown';
+    const category = this.violationCategories.find(c => c.category_id === categoryId);
+    return category ? category.category_name : 'Unknown';
   }
 
   getStatusBadge(statusId?: number): string {

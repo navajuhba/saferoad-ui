@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Violation, Reward, UserWallet } from '../../models';
+import { Violation, ViolationCategory, Reward, UserWallet } from '../../models';
 import { UserStateService } from '../../services/user-state.service';
 import { UserService } from '../../services/user.service';
 import { ViolationService } from '../../services/violation.service';
@@ -48,6 +48,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   rejectingId: number | null = null;
   rejectionReasons: { [id: number]: string } = {};
   showRejectForms: { [id: number]: boolean } = {};
+  rewardAmounts: { [id: number]: number } = {};
 
   vehicleTypes = [
     { id: 1, name: 'Car' }, { id: 2, name: 'Motorcycle' }, { id: 3, name: 'Truck' },
@@ -55,20 +56,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { id: 7, name: 'Sedan' }, { id: 8, name: 'Van' }, { id: 9, name: 'Others' }
   ];
 
-  violationCategories = [
-    { id: 1, name: 'Speeding' }, { id: 2, name: 'Red Light Violation' },
-    { id: 3, name: 'Rash Driving' }, { id: 4, name: 'Wrong Way' },
-    { id: 5, name: 'Parking Violation' }, { id: 6, name: 'No Seat Belt' },
-    { id: 7, name: 'Mobile Phone Usage' }, { id: 8, name: 'Lane Change Violation' },
-    { id: 9, name: 'Other' }
-  ];
+  violationCategories: ViolationCategory[] = [];
 
   getVehicleTypeName(id?: number): string {
     return this.vehicleTypes.find(t => t.id === id)?.name || 'Unknown';
   }
 
   getCategoryName(id?: number): string {
-    return this.violationCategories.find(c => c.id === id)?.name || `Category ${id}`;
+    return this.violationCategories.find(c => c.category_id === id)?.category_name || `Category ${id}`;
+  }
+
+  getCategoryBaseAmount(categoryId?: number): number {
+    return this.violationCategories.find(c => c.category_id === categoryId)?.base_reward_amount ?? 0;
+  }
+
+  private loadCategories(): void {
+    this.violationService.listViolationCategories().subscribe({
+      next: (response: any) => {
+        this.violationCategories = response?.data || (Array.isArray(response) ? response : []);
+        // Backfill default reward amounts for any pending violations that loaded before categories did.
+        this.pendingViolations.forEach(v => {
+          if (!this.rewardAmounts[v.violation_id]) {
+            this.rewardAmounts[v.violation_id] = this.getCategoryBaseAmount(v.category_id);
+          }
+        });
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
   }
 
   toggleRejectForm(id: number): void {
@@ -113,6 +128,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recentRewards: Reward[] = [];
 
   ngOnInit(): void {
+    this.loadCategories();
     this.loadDashboardData();
     this.dataRefresh.refresh$.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadDashboardData());
   }
@@ -142,15 +158,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // If signal is already set, use it; otherwise fetch user details to get user_type_id
     if (user) {
-      this.isAdmin = user.user_type_id === 1;
+      this.isAdmin = user.user_type_id === 2;
       this.initDashboardLoads(userId);
     } else {
-      this.userService.getUserDetails(userId.toString()).subscribe({
+      this.userService.getUserDetailsWithType(userId.toString()).subscribe({
         next: (response: any) => {
           const userData = response?.data || response;
           if (userData) {
             this.userStateService.setUser(userData);
-            this.isAdmin = userData.user_type_id === 1;
+            this.isAdmin = userData.user_type_id === 2;
           }
           this.initDashboardLoads(userId);
           this.cdr.detectChanges();
@@ -167,7 +183,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadWalletData(userId);
     this.loadRecentViolations(userId);
     this.loadRecentRewards(userId);
-    this.loadPendingViolations(); // always attempt; section shows only if data returns
+    if (this.isAdmin) this.loadPendingViolations();
   }
 
   private loadWalletData(userId: number): void {
@@ -245,18 +261,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.violationService.listPendingViolations(1, 20).subscribe(
       (response: any) => {
-        this.pendingViolations = response?.data || (Array.isArray(response) ? response : []);
-        this.isAdmin = this.pendingViolations.length >= 0; // show section if API succeeded
+        const data: Violation[] = response?.data || (Array.isArray(response) ? response : []);
+        this.pendingViolations = data;
+        data.forEach(v => {
+          if (this.rewardAmounts[v.violation_id] == null) {
+            this.rewardAmounts[v.violation_id] = this.getCategoryBaseAmount(v.category_id);
+          }
+        });
         this.isLoadingPending = false;
         this.cdr.detectChanges();
       },
       (error) => {
-        // 403/401 means not admin — silently hide the section
-        if (error?.status === 401 || error?.status === 403) {
-          this.isAdmin = false;
-        } else {
-          this.pendingError = 'Failed to load pending reports.';
-        }
+        this.pendingError = 'Failed to load pending reports.';
         this.isLoadingPending = false;
         this.cdr.detectChanges();
       }
@@ -266,12 +282,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   approveViolation(violationId: number): void {
     const adminId = this.sessionService.getUserId();
     if (!adminId) { console.error('No admin session'); return; }
+    const violation = this.pendingViolations.find(v => v.violation_id === violationId);
+    const rewardAmount = this.rewardAmounts[violationId] ?? this.getCategoryBaseAmount(violation?.category_id);
     this.approvingId = violationId;
     this.verificationService.approveViolation({ violation_id: violationId, admin_id: adminId, confidence_score: 1 }).subscribe({
       next: () => {
-        this.pendingViolations = this.pendingViolations.filter(v => v.violation_id !== violationId);
-        this.approvingId = null;
-        this.cdr.detectChanges();
+        this.rewardService.createReward({
+          violation_id: violationId,
+          reporter_id: violation?.reporter_id,
+          category_id: violation?.category_id,
+          reward_amount: rewardAmount
+        }).subscribe({
+          next: () => this.finishApproval(violationId),
+          error: (err) => {
+            console.error('Reward creation failed:', err);
+            this.finishApproval(violationId);
+          }
+        });
       },
       error: (err) => {
         console.error('Approve failed:', err);
@@ -279,6 +306,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private finishApproval(violationId: number): void {
+    this.pendingViolations = this.pendingViolations.filter(v => v.violation_id !== violationId);
+    delete this.rewardAmounts[violationId];
+    this.approvingId = null;
+    this.dataRefresh.triggerRefresh();
+    this.cdr.detectChanges();
   }
 
   rejectViolation(violationId: number): void {
@@ -292,6 +327,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.rejectingId = null;
         delete this.showRejectForms[violationId];
         delete this.rejectionReasons[violationId];
+        delete this.rewardAmounts[violationId];
+        this.dataRefresh.triggerRefresh();
         this.cdr.detectChanges();
       },
       error: (err) => {

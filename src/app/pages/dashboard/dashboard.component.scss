@@ -567,6 +567,29 @@
         display: flex;
         gap: 0.75rem;
         flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .reward-amount-label {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #20a853;
+      }
+
+      .reward-amount-input {
+        width: 90px;
+        padding: 0.45rem 0.5rem;
+        border: 1.5px solid #d0d0d0;
+        border-radius: 6px;
+        font-size: 0.9rem;
+
+        &:focus {
+          outline: none;
+          border-color: #2ed573;
+        }
       }
 
       button {

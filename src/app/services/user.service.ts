@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { User, UserWallet, ApiResponse } from '../models/index';
 
@@ -42,6 +43,40 @@ export class UserService {
   getUserDetails(userId: string): Observable<ApiResponse<User>> {
     return this.http.get<ApiResponse<User>>(
       `${this.apiUrl}${environment.users.getUserDetails(userId)}`
+    );
+  }
+
+  /**
+   * List users of a given type (e.g. 2 = Admin/Verifier)
+   * GET /api/v1/users/by-type/{type_id}
+   */
+  getUsersByType(typeId: string | number): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}${environment.users.getUsersByType(String(typeId))}`
+    );
+  }
+
+  /**
+   * GET /users/{id} on this backend never includes user_type_id, so admin
+   * status can't be read off it directly. Cross-check the user against the
+   * admin roster (users/by-type/2) and merge the result in, so callers that
+   * gate on `user.user_type_id === 2` work as documented.
+   */
+  getUserDetailsWithType(userId: string): Observable<ApiResponse<User>> {
+    return this.getUserDetails(userId).pipe(
+      switchMap((detailsResp: any) => {
+        const details = detailsResp?.data || detailsResp;
+        if (!details) return of(detailsResp);
+        if (details.user_type_id) return of(detailsResp);
+        return this.getUsersByType(2).pipe(
+          map((adminResp: any) => {
+            const admins: any[] = adminResp?.data || [];
+            const isAdmin = admins.some((a: any) => String(a.user_id) === String(userId));
+            return { ...detailsResp, data: { ...details, user_type_id: isAdmin ? 2 : 1 } };
+          }),
+          catchError(() => of(detailsResp))
+        );
+      })
     );
   }
 

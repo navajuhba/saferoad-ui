@@ -75,21 +75,24 @@ export class RewardService {
    * Approve a reward
    * PATCH /api/v1/rewards/{id}/approve
    */
-  approveReward(id: string, approvalData?: any): Observable<Reward> {
+  approveReward(id: string | number): Observable<Reward> {
     return this.http.patch<Reward>(
-      `${this.apiUrl}${environment.rewards.approveReward(id)}`,
-      approvalData || {}
+      `${this.apiUrl}${environment.rewards.approveReward(String(id))}`,
+      {}
     );
   }
 
   /**
-   * Pay a reward (mark as paid)
-   * PATCH /api/v1/rewards/{id}/pay
+   * Pay a reward and credit the reporter's wallet
+   * PATCH /api/v1/rewards/{id}/pay?payment_method_id=
+   * The backend expects payment_method_id as a query param, not a JSON body.
    */
-  payReward(id: string, paymentData?: any): Observable<Reward> {
+  payReward(id: string | number, paymentMethodId: number | string): Observable<Reward> {
+    const params = new URLSearchParams();
+    params.set('payment_method_id', String(paymentMethodId));
     return this.http.patch<Reward>(
-      `${this.apiUrl}${environment.rewards.payReward(id)}`,
-      paymentData || {}
+      `${this.apiUrl}${environment.rewards.payReward(String(id))}?${params.toString()}`,
+      {}
     );
   }
 }

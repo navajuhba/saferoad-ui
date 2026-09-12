@@ -178,6 +178,22 @@
         </div>
 
         <div class="info-section" *ngIf="isAdmin()">
+          <h3>💰 Reward Amount <small>(credited to reporter on approval)</small></h3>
+          <div class="text-fields">
+            <div class="text-field">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                [(ngModel)]="rewardAmount"
+                placeholder="Amount to credit…"
+                class="reward-amount-input"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section" *ngIf="isAdmin()">
           <h3>Rejection Reason <small>(required to reject)</small></h3>
           <div class="text-fields">
             <div class="text-field">
@@ -204,10 +220,10 @@
           </button>
           <button
             class="btn-success"
-            (click)="approve(selectedViolation)"
+            (click)="approve(selectedViolation, rewardAmount || 0)"
             [disabled]="processingId === selectedViolation.violation_id"
           >
-            Approve
+            Approve &amp; Credit ₹{{ rewardAmount || 0 }}
           </button>
         </ng-container>
       </div>

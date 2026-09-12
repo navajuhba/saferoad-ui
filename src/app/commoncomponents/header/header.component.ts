@@ -74,7 +74,7 @@ export class HeaderComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.userService.getUserDetails(this.userId).subscribe({
+    this.userService.getUserDetailsWithType(this.userId).subscribe({
       next: (response: ApiResponse<User>) => {
         if (response.data) {
           const userData = response.data;

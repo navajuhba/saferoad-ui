@@ -228,6 +228,7 @@
           <!-- Admin review controls (pending only) -->
           <div class="info-group admin-review" *ngIf="isAdmin() && selectedViolation.violation_status_id === 1">
             <label>🛡️ Admin Review</label>
+            <p class="reward-preview">💰 Approving will credit the reporter ₹{{ getCategoryBaseAmount(selectedViolation.category_id) }}</p>
             <textarea
               [(ngModel)]="rejectionReason"
               rows="3"

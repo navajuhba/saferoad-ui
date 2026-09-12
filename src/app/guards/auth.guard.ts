@@ -32,7 +32,7 @@ export const authGuard: CanActivateFn = (route, state) => {
  * If user already logged in -> redirect to dashboard
  * If not logged in -> allow access to login page
  */
-export const loginGuard: CanActivateFn = (route, state) => {
+  export const loginGuard: CanActivateFn = (route, state) => {
   const sessionAuthService = inject(SessionAuthService);
   const router = inject(Router);
 

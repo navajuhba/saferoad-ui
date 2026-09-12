@@ -102,8 +102,8 @@ export class SidebarComponent implements OnInit {
     private sessionService: SessionAuthService,
     private userState: UserStateService,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef 
+  ) {} 
 
   ngOnInit() {
     this.ensureUserLoaded();
@@ -115,7 +115,7 @@ export class SidebarComponent implements OnInit {
     if (this.userState.currentUser()) return;
     const userId = this.sessionService.getUserId();
     if (!userId) return;
-    this.userService.getUserDetails(userId).subscribe({
+    this.userService.getUserDetailsWithType(userId).subscribe({
       next: (response: any) => {
         const user = response?.data || response;
         if (user?.user_id) {

@@ -38,12 +38,16 @@
   <!-- Tabs Section -->
   <div class="tabs-container">
     <div class="tabs">
-      <button class="tab-btn active">📊 Rewards</button>
-      <button class="tab-btn">📈 Transactions</button>
+      <button class="tab-btn" [class.active]="activeTab === 'rewards'" (click)="setTab('rewards')">📊 Rewards</button>
+      <button class="tab-btn" [class.active]="activeTab === 'transactions'" (click)="setTab('transactions')">📈 Transactions</button>
+      <button class="tab-btn" *ngIf="isAdmin()" [class.active]="activeTab === 'admin'" (click)="setTab('admin')">
+        🔐 Admin Approvals
+        <span class="tab-badge" *ngIf="pendingRewards.length > 0">{{ pendingRewards.length }}</span>
+      </button>
     </div>
 
     <!-- Rewards Tab -->
-    <div class="tab-content active">
+    <div class="tab-content" [class.active]="activeTab === 'rewards'">
       <div class="rewards-list">
         <div class="list-header">
           <h2>Reward History</h2>
@@ -87,7 +91,7 @@
     </div>
 
     <!-- Transactions Tab -->
-    <div class="tab-content">
+    <div class="tab-content" [class.active]="activeTab === 'transactions'">
       <div class="transactions-list">
         <div class="list-header">
           <h2>Transaction History</h2>
@@ -112,6 +116,74 @@
               <span class="amount" [ngClass]="transaction.transaction_type_id === 1 ? 'positive' : 'negative'">
                 {{ formatAmount(transaction.amount) }}
               </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin: Reward Approval + Payout Tab -->
+    <div class="tab-content" [class.active]="activeTab === 'admin'" *ngIf="isAdmin()">
+      <div class="rewards-list">
+        <div class="list-header">
+          <h2>Reward Approvals</h2>
+          <button class="btn-refresh-sm" (click)="loadPendingRewards()" [disabled]="isLoadingPendingRewards">🔄 Refresh</button>
+        </div>
+
+        <div *ngIf="isLoadingPendingRewards" class="empty-state"><p>Loading…</p></div>
+
+        <div *ngIf="pendingRewardsError && !isLoadingPendingRewards" class="empty-state">
+          <p>⚠️ {{ pendingRewardsError }}</p>
+        </div>
+
+        <div *ngIf="!isLoadingPendingRewards && !pendingRewardsError && pendingRewards.length === 0" class="empty-state">
+          <p>🎉 No rewards awaiting approval or payout</p>
+        </div>
+
+        <div *ngIf="!isLoadingPendingRewards" class="admin-reward-cards">
+          <div *ngFor="let reward of pendingRewards" class="admin-reward-card">
+            <div class="admin-reward-header">
+              <span class="reward-badge">Reward #{{ reward.reward_id }}</span>
+              <span class="violation-link">Violation #{{ reward.violation_id }}</span>
+              <span class="status-badge" [ngClass]="'status-' + getRewardStatusBadge(reward.reward_status_id)">
+                {{ getRewardStatusName(reward.reward_status_id) }}
+              </span>
+            </div>
+
+            <div class="admin-reward-body">
+              <div class="detail-row">
+                <span class="detail-label">Reporter:</span>
+                <span class="detail-value">#{{ reward.reporter_id }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Amount:</span>
+                <span class="detail-value amount-highlight">{{ formatAmount(reward.reward_amount) }}</span>
+              </div>
+            </div>
+
+            <div class="admin-reward-actions">
+              <button
+                *ngIf="reward.reward_status_id === 1"
+                class="btn-approve"
+                (click)="approveReward(reward)"
+                [disabled]="processingRewardId === reward.reward_id"
+              >
+                {{ processingRewardId === reward.reward_id ? '…' : '✓ Approve' }}
+              </button>
+
+              <ng-container *ngIf="reward.reward_status_id === 2">
+                <select class="payment-method-select" [(ngModel)]="selectedPaymentMethod[reward.reward_id]">
+                  <option [ngValue]="null" disabled selected>Payment method…</option>
+                  <option *ngFor="let m of paymentMethods" [ngValue]="m.id">{{ m.name }}</option>
+                </select>
+                <button
+                  class="btn-pay"
+                  (click)="payReward(reward)"
+                  [disabled]="processingRewardId === reward.reward_id || !selectedPaymentMethod[reward.reward_id]"
+                >
+                  {{ processingRewardId === reward.reward_id ? '…' : '💰 Pay & Credit' }}
+                </button>
+              </ng-container>
             </div>
           </div>
         </div>

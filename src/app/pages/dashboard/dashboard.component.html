@@ -252,12 +252,23 @@
           <!-- Admin Action Section -->
           <div class="card-actions">
             <div class="action-buttons" *ngIf="!showRejectForms[v.violation_id]">
+              <label class="reward-amount-label">
+                💰 Reward ₹
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  class="reward-amount-input"
+                  [(ngModel)]="rewardAmounts[v.violation_id]"
+                  [disabled]="approvingId === v.violation_id"
+                />
+              </label>
               <button
                 class="btn-approve"
                 (click)="approveViolation(v.violation_id)"
                 [disabled]="approvingId === v.violation_id || rejectingId === v.violation_id"
               >
-                <span *ngIf="approvingId !== v.violation_id">✅ Approve Report</span>
+                <span *ngIf="approvingId !== v.violation_id">✅ Approve & Credit</span>
                 <span *ngIf="approvingId === v.violation_id">Processing...</span>
               </button>
               <button
