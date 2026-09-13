@@ -98,6 +98,16 @@ export class ViolationService {
   }
 
   /**
+   * Delete a violation report
+   * DELETE /api/v1/violations/{id}
+   */
+  deleteViolation(id: string | number): Observable<any> {
+    return this.http.delete<any>(
+      `${this.apiUrl}${environment.violations.deleteViolation(String(id))}`
+    );
+  }
+
+  /**
    * Create a violation category
    * POST /api/v1/violations/categories/
    */

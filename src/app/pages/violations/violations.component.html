@@ -245,7 +245,7 @@
 
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeDetails()">Close</button>
-        <button class="btn-primary" (click)="editViolation(selectedViolation)">Edit</button>
+        <button class="btn-primary" *ngIf="selectedViolation.violation_status_id !== 3" (click)="editViolation(selectedViolation)">Edit</button>
         <button class="btn-danger" (click)="deleteViolation(selectedViolation.violation_id)">Delete</button>
         <ng-container *ngIf="isAdmin() && selectedViolation.violation_status_id === 1">
           <button

@@ -28,6 +28,7 @@ export const environment = {
   violations: {
     reportViolation: '/violations/',
     getViolationDetails: (id: string) => `/violations/${id}`,
+    deleteViolation: (id: string) => `/violations/${id}`,
     listAllViolations: '/violations/',
     listPendingViolations: '/violations/pending/list',
     listViolationsByReporter: (userId: string) => `/violations/reporter/${userId}`,

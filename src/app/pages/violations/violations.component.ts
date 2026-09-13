@@ -320,8 +320,20 @@ export class ViolationsComponent implements OnInit, OnDestroy {
   }
 
   deleteViolation(violationId: number) {
-    this.violations = this.violations.filter(v => v.violation_id !== violationId);
-    this.closeDetails();
+    this.violationService.deleteViolation(violationId).subscribe({
+      next: () => {
+        this.violations = this.violations.filter(v => v.violation_id !== violationId);
+        this.toasterService.success('Violation report deleted.');
+        this.closeDetails();
+        this.dataRefresh.triggerRefresh();
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        const detail = err?.error?.detail || err?.error?.message;
+        this.toasterService.error(`Failed to delete violation${detail ? ': ' + detail : ''}.`);
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   getStats() {
