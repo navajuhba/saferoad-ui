@@ -98,6 +98,16 @@ export class ViolationService {
   }
 
   /**
+   * Look up every challan/report filed against a vehicle plate number
+   * GET /api/v1/violations/plate/{plateNumber}
+   */
+  listViolationsByPlate(plateNumber: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}${environment.violations.listViolationsByPlate(plateNumber)}`
+    );
+  }
+
+  /**
    * Delete a violation report
    * DELETE /api/v1/violations/{id}
    */

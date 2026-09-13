@@ -80,6 +80,12 @@ export class SidebarComponent implements OnInit {
       route: '/user-management',
       icon: '👥',
       description: 'Manage reporter users'
+    },
+    {
+      label: 'Vehicle Search',
+      route: '/vehicle-search',
+      icon: '🚓',
+      description: 'Look up all challans filed against a vehicle number'
     }
   ];
 

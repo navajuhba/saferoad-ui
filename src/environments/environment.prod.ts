@@ -28,6 +28,7 @@ export const environment = {
     listAllViolations: '/violations/',
     listPendingViolations: '/violations/pending/list',
     listViolationsByReporter: (userId: string) => `/violations/reporter/${userId}`,
+    listViolationsByPlate: (plateNumber: string) => `/violations/plate/${encodeURIComponent(plateNumber)}`,
     createViolationCategory: '/violations/categories/',
     listViolationCategories: '/violations/categories/',
   },

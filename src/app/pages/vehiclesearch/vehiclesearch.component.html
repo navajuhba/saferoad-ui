@@ -1,0 +1,108 @@
+<div class="vehiclesearch-container">
+
+  <div class="page-header">
+    <h1>🚓 Vehicle Challan Search</h1>
+    <p>Search by vehicle plate number to see every challan (violation report) filed against it.</p>
+  </div>
+
+  <div class="search-bar">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Enter vehicle plate number, e.g. TG22DD5454"
+      [(ngModel)]="plateNumber"
+      (keyup.enter)="search()"
+    />
+    <button class="btn-search" (click)="search()" [disabled]="isLoading">
+      {{ isLoading ? 'Searching…' : '🔍 Search' }}
+    </button>
+    <button class="btn-clear" *ngIf="hasSearched" (click)="clear()">Clear</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Searching records…</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="errorMessage && !isLoading" class="error-state">
+    <p>⚠️ {{ errorMessage }}</p>
+  </div>
+
+  <!-- Results -->
+  <ng-container *ngIf="hasSearched && !isLoading && !errorMessage">
+
+    <div class="summary-card">
+      <div class="summary-icon">🚗</div>
+      <div class="summary-content">
+        <h2>{{ searchedPlate }}</h2>
+        <p><strong>{{ totalChallans }}</strong> challan{{ totalChallans === 1 ? '' : 's' }} found for this vehicle</p>
+      </div>
+    </div>
+
+    <div *ngIf="results.length === 0" class="empty-state">
+      <p>✅ No challans found for this vehicle number</p>
+    </div>
+
+    <div class="results-list">
+      <div *ngFor="let v of results" class="result-card">
+        <div class="result-image">
+          <img *ngIf="v.image_url" [src]="resolveImageUrl(v.image_url)" alt="Violation photo" />
+          <div class="no-img-placeholder" *ngIf="!v.image_url">
+            <span>📷</span><small>No photo</small>
+          </div>
+        </div>
+
+        <div class="result-details">
+          <div class="result-header">
+            <span class="result-id">Challan #{{ v.violation_id }}</span>
+            <span class="status-badge" [ngClass]="'status-' + getStatusBadge(v.violation_status_id)">
+              {{ getStatusName(v.violation_status_id) }}
+            </span>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="di-label">🏷️ Violation Type</span>
+              <span class="di-value">{{ getCategoryName(v.category_id) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="di-label">🚙 Vehicle Type</span>
+              <span class="di-value">{{ getVehicleTypeName(v.vehicle_type_id) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="di-label">🎨 Vehicle Color</span>
+              <span class="di-value">{{ v.vehicle_color || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="di-label">📅 Date & Time</span>
+              <span class="di-value">{{ v.violation_datetime | date: 'medium' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="di-label">📍 Location</span>
+              <span class="di-value">
+                <ng-container *ngIf="v.location_address">{{ v.location_address }}</ng-container>
+                <ng-container *ngIf="!v.location_address && v.location_latitude">
+                  {{ v.location_latitude | number:'1.4-4' }}, {{ v.location_longitude | number:'1.4-4' }}
+                </ng-container>
+                <ng-container *ngIf="!v.location_address && !v.location_latitude">—</ng-container>
+              </span>
+            </div>
+            <div class="detail-item full-span" *ngIf="v.description">
+              <span class="di-label">📝 Description</span>
+              <span class="di-value">{{ v.description }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Initial empty state -->
+  <div *ngIf="!hasSearched" class="initial-state">
+    <span class="initial-icon">🔍</span>
+    <p>Enter a vehicle plate number above to view its challan history.</p>
+  </div>
+
+</div>

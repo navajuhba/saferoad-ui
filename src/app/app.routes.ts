@@ -68,6 +68,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'vehicle-search',
+    loadComponent: () => import('./pages/vehiclesearch/vehiclesearch.component').then(m => m.VehiclesearchComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     redirectTo: '/home'
   }
